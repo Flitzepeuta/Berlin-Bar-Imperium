@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berlin Bar Tycoon - Districts Update</title>
+    <title>Berlin Bar Tycoon - Visual Polish</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -30,7 +30,7 @@
         .bar-marker-container {
             position: relative;
             display: flex;
-            flex-col: column;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
@@ -57,17 +57,20 @@
         /* Bouncing Arrow */
         .upgrade-arrow {
             position: absolute;
-            top: -25px;
+            top: -30px;
             left: 50%;
             transform: translateX(-50%);
-            color: #4ade80; /* Green-400 */
-            font-size: 20px;
+            color: #4ade80;
+            font-size: 24px;
             font-weight: bold;
             animation: bounce 1s infinite;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            z-index: 20;
-            pointer-events: none;
+            z-index: 100;
+            cursor: pointer;
+            pointer-events: auto !important;
+            filter: drop-shadow(0 0 2px black);
         }
+        .upgrade-arrow:hover { transform: translateX(-50%) scale(1.2); color: #22c55e; }
 
         /* Income Badge on Map */
         .income-badge {
@@ -85,6 +88,74 @@
             pointer-events: none;
         }
 
+        /* Level Badge on Map Marker */
+        .level-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 16px;
+            height: 16px;
+            background-color: #1f2937; /* Gray-800 */
+            color: white;
+            border: 1px solid white;
+            border-radius: 50%;
+            font-size: 9px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 25;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Milestone Styling (Level 5, 10, 15...) */
+        .level-milestone {
+            background-color: #fbbf24; /* Amber-400 (Gold) */
+            color: black;
+            border-color: #f59e0b;
+            width: 18px;
+            height: 18px;
+            top: -6px;
+            right: -6px;
+            animation: pulse-gold 2s infinite;
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+            z-index: 26;
+        }
+        
+        /* Special Colors for Higher Milestones could be added here */
+        .level-milestone-high {
+            background-color: #818cf8; /* Indigo (Diamond-ish) */
+            color: white;
+            border-color: #6366f1;
+        }
+
+        @keyframes pulse-gold {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(251, 191, 36, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+
+        /* Float Text Animation */
+        .float-text {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 0 2px 4px rgba(0,0,0,1);
+            animation: floatUp 1s forwards;
+            pointer-events: none;
+            z-index: 200;
+            white-space: nowrap;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+        }
+
         @keyframes bounce {
             0%, 100% { transform: translateX(-50%) translateY(0); }
             50% { transform: translateX(-50%) translateY(-8px); }
@@ -95,6 +166,19 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ffd700;
+            top: -10px;
+            animation: confetti 3s linear forwards;
+        }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
@@ -144,29 +228,27 @@
             { id: 20, district: "Treptow", name: "Molecule Man", lat: 52.4967, lng: 13.4593, baseCost: 500000, baseIncome: 2500, type: "Landmark", description: "Party auf dem Wasser." }
         ];
 
-        // --- DATA: DISTRICT BOUNDARIES (Simplified Game Zones) ---
         const DISTRICT_POLYGONS = {
-            "Neukölln": [[52.489, 13.419], [52.489, 13.456], [52.464, 13.456], [52.464, 13.419]],
-            "Kreuzberg": [[52.505, 13.375], [52.505, 13.456], [52.489, 13.456], [52.489, 13.375]],
-            "Friedrichshain": [[52.525, 13.435], [52.525, 13.480], [52.495, 13.480], [52.495, 13.435]],
-            "Mitte": [[52.535, 13.365], [52.535, 13.435], [52.505, 13.435], [52.505, 13.365]],
-            "Prenzlauer Berg": [[52.555, 13.390], [52.555, 13.450], [52.525, 13.450], [52.525, 13.390]],
-            "Charlottenburg": [[52.520, 13.290], [52.520, 13.365], [52.495, 13.365], [52.495, 13.290]],
-            "Lichtenberg": [[52.530, 13.480], [52.530, 13.520], [52.480, 13.520], [52.480, 13.480]],
-            "Treptow": [[52.495, 13.435], [52.495, 13.480], [52.480, 13.480], [52.480, 13.435]]
+            "Neukölln": [[52.495, 13.419], [52.485, 13.450], [52.470, 13.460], [52.440, 13.460], [52.420, 13.440], [52.440, 13.410], [52.470, 13.420]],
+            "Kreuzberg": [[52.505, 13.375], [52.508, 13.400], [52.500, 13.450], [52.495, 13.450], [52.490, 13.420], [52.485, 13.380], [52.495, 13.370]],
+            "Friedrichshain": [[52.525, 13.435], [52.525, 13.465], [52.510, 13.480], [52.500, 13.475], [52.495, 13.455], [52.500, 13.435], [52.515, 13.425]],
+            "Mitte": [[52.535, 13.365], [52.535, 13.410], [52.525, 13.425], [52.510, 13.425], [52.505, 13.400], [52.505, 13.365], [52.520, 13.350]],
+            "Prenzlauer Berg": [[52.555, 13.390], [52.560, 13.435], [52.550, 13.460], [52.525, 13.460], [52.525, 13.420], [52.530, 13.400]],
+            "Charlottenburg": [[52.525, 13.260], [52.525, 13.330], [52.515, 13.350], [52.500, 13.350], [52.495, 13.300], [52.495, 13.250]],
+            "Lichtenberg": [[52.540, 13.475], [52.540, 13.520], [52.500, 13.530], [52.480, 13.520], [52.480, 13.480], [52.500, 13.470]],
+            "Treptow": [[52.495, 13.455], [52.495, 13.500], [52.460, 13.520], [52.440, 13.500], [52.460, 13.450]]
         };
 
-        // --- DATA: ACHIEVEMENTS & GENERATION ---
-        
-        // Base Achievements
         const BASE_ACHIEVEMENTS = [
             { id: 'first_buck', name: 'Erster Euro', description: 'Besitze 1€', condition: (state) => state.money >= 1, reward: 0 },
             { id: 'bar_owner', name: 'Kneipier', description: 'Kaufe deine erste Bar', condition: (state, bars) => Object.values(bars).some(b => b.owned), reward: 1.1 },
             { id: 'millionaire', name: 'Millionär', description: 'Besitze 1.000.000€', condition: (state) => state.money >= 1000000, reward: 1.5 },
             { id: 'bottle_master', name: 'Pfand Profi', description: 'Erreiche Sammel-Level 5', condition: (state) => state.clickLevel >= 5, reward: 1.2 },
+            { id: 'click_100', name: 'Finger-Training', description: 'Klicke 100 mal', condition: (state) => state.totalClicks >= 100, reward: 1.1 },
+            { id: 'click_500', name: 'Maus-Zerstörer', description: 'Klicke 500 mal', condition: (state) => state.totalClicks >= 500, reward: 1.2 },
+            { id: 'click_1000', name: 'Lichtgeschwindigkeit', description: 'Klicke 1000 mal', condition: (state) => state.totalClicks >= 1000, reward: 1.3 },
         ];
 
-        // Generate District Achievements dynamically
         const DISTRICT_ACHIEVEMENTS = Object.keys(DISTRICT_POLYGONS).map(districtName => ({
             id: `king_${districtName.toLowerCase().replace(/\s/g, '_')}`,
             name: `King of ${districtName}`,
@@ -177,11 +259,10 @@
                 if (districtBars.length === 0) return false;
                 return districtBars.every(b => bars[b.id] && bars[b.id].owned);
             },
-            reward: 1.25 // 25% Boost per completed district
+            reward: 1.25 
         }));
 
         const ALL_ACHIEVEMENTS = [...BASE_ACHIEVEMENTS, ...DISTRICT_ACHIEVEMENTS];
-
 
         // Helpers
         const formatMoney = (amount) => {
@@ -199,12 +280,14 @@
         const App = () => {
             // --- STATE ---
             const [gameState, setGameState] = useState(() => {
-                const saved = localStorage.getItem('berlinBarTycoon_v3'); // Version bump to v3
+                const saved = localStorage.getItem('berlinBarTycoon_v4');
                 const defaultState = {
                     money: 0,
                     clickLevel: 1,
+                    totalClicks: 0,
                     unlockedAchievements: [],
-                    bars: {}
+                    bars: {},
+                    hasSeenWin: false
                 };
                 INITIAL_BARS.forEach(bar => { defaultState.bars[bar.id] = { level: 0, owned: false }; });
 
@@ -218,11 +301,12 @@
             const [selectedBarId, setSelectedBarId] = useState(null);
             const [isListOpen, setIsListOpen] = useState(false);
             const [showAchievements, setShowAchievements] = useState(false);
+            const [showWinModal, setShowWinModal] = useState(false);
             const [notification, setNotification] = useState(null);
             
             const mapRef = useRef(null);
             const markersRef = useRef({});
-            const polygonsRef = useRef({}); // Ref for district polygons
+            const polygonsRef = useRef({});
 
             // --- CALCULATIONS ---
             const getGlobalMultiplier = () => {
@@ -256,14 +340,19 @@
             };
 
             const getClickIncome = () => {
-                return (10 * Math.pow(1.8, gameState.clickLevel - 1)) + (getTotalIncome() * 0.05);
+                const base = (10 * Math.pow(1.8, gameState.clickLevel - 1)) + (getTotalIncome() * 0.05);
+                return base * globalMult;
             };
 
             const getClickUpgradeCost = () => {
                 return Math.floor(500 * Math.pow(2.5, gameState.clickLevel - 1));
             };
 
-            // --- LOOPS ---
+            const canAffordAnyUpgrade = useMemo(() => {
+                return INITIAL_BARS.some(bar => gameState.money >= getUpgradeCost(bar.id));
+            }, [gameState.money, gameState.bars]);
+
+            // --- LOOPS & EFFECTS ---
             useEffect(() => {
                 const interval = setInterval(() => {
                     const income = getTotalIncome();
@@ -273,8 +362,15 @@
             }, [gameState.bars, gameState.unlockedAchievements]);
 
             useEffect(() => {
-                localStorage.setItem('berlinBarTycoon_v3', JSON.stringify(gameState));
+                localStorage.setItem('berlinBarTycoon_v4', JSON.stringify(gameState));
             }, [gameState]);
+
+            useEffect(() => {
+                if (gameState.money >= 1000000 && !gameState.hasSeenWin) {
+                    setShowWinModal(true);
+                    setGameState(prev => ({ ...prev, hasSeenWin: true }));
+                }
+            }, [gameState.money]);
 
             useEffect(() => {
                 const newUnlocks = [];
@@ -297,7 +393,101 @@
                     });
                     setTimeout(() => setNotification(null), 4000);
                 }
-            }, [gameState.money, gameState.bars, gameState.clickLevel]);
+            }, [gameState.money, gameState.bars, gameState.clickLevel, gameState.totalClicks]);
+
+
+            // --- ACTIONS ---
+            const handleClicker = () => {
+                setGameState(prev => ({ 
+                    ...prev, 
+                    money: prev.money + getClickIncome(),
+                    totalClicks: (prev.totalClicks || 0) + 1 
+                }));
+            };
+
+            const upgradeClicker = () => {
+                const cost = getClickUpgradeCost();
+                if (gameState.money >= cost) setGameState(prev => ({ ...prev, money: prev.money - cost, clickLevel: prev.clickLevel + 1 }));
+            };
+
+            window.triggerUpgrade = (barId, event) => {
+                if(event) event.stopPropagation();
+                purchaseOrUpgradeBar(barId, true);
+            };
+
+            const purchaseOrUpgradeBar = (barId, fromMap = false) => {
+                setGameState(prev => {
+                    const bar = INITIAL_BARS.find(b => b.id === barId);
+                    const state = prev.bars[barId];
+                    const currentLevel = state ? state.level : 0;
+                    const isOwned = state ? state.owned : false;
+                    const cost = !isOwned ? bar.baseCost : Math.floor(bar.baseCost * Math.pow(1.5, currentLevel));
+                    
+                    if (prev.money >= cost) {
+                        if (fromMap) {
+                            showFloatingText(bar.id, isOwned ? `Lvl ${currentLevel + 1}` : "Gekauft!");
+                        }
+                        const newState = { ...prev, money: prev.money - cost, bars: { ...prev.bars } };
+                        newState.bars[barId] = { ...prev.bars[barId] };
+                        if (!newState.bars[barId].owned) {
+                            newState.bars[barId].owned = true;
+                            newState.bars[barId].level = 1;
+                        } else {
+                            newState.bars[barId].level += 1;
+                        }
+                        return newState;
+                    }
+                    return prev;
+                });
+            };
+
+            const upgradeAll = () => {
+                setGameState(prev => {
+                    let currentMoney = prev.money;
+                    const newBars = { ...prev.bars };
+                    let changed = false;
+                    
+                    INITIAL_BARS.forEach(bar => {
+                        const state = newBars[bar.id];
+                        const cost = !state.owned ? bar.baseCost : Math.floor(bar.baseCost * Math.pow(1.5, state.level));
+                        
+                        if (currentMoney >= cost) {
+                            currentMoney -= cost;
+                            newBars[bar.id] = { ...state };
+                            if (!state.owned) {
+                                newBars[bar.id].owned = true;
+                                newBars[bar.id].level = 1;
+                            } else {
+                                newBars[bar.id].level += 1;
+                            }
+                            changed = true;
+                        }
+                    });
+
+                    if (changed) {
+                        return { ...prev, money: currentMoney, bars: newBars };
+                    }
+                    return prev;
+                });
+            };
+
+            const showFloatingText = (barId, text) => {
+                const marker = markersRef.current[barId];
+                if (!marker) return;
+
+                const map = mapRef.current;
+                const bar = INITIAL_BARS.find(b => b.id === barId);
+                const point = map.latLngToContainerPoint([bar.lat, bar.lng]);
+
+                const el = document.createElement('div');
+                el.className = 'float-text';
+                el.innerText = text;
+                el.style.left = point.x + 'px';
+                el.style.top = point.y + 'px';
+                
+                document.getElementById('map').appendChild(el);
+                setTimeout(() => el.remove(), 1000);
+            };
 
             // --- MAP INIT & UPDATE ---
             useEffect(() => {
@@ -314,32 +504,19 @@
                     }).addTo(mapRef.current);
                 }
 
-                // 1. Draw/Update District Polygons
                 Object.keys(DISTRICT_POLYGONS).forEach(districtName => {
                     const coords = DISTRICT_POLYGONS[districtName];
-                    
-                    // Check completion
                     const barsInDistrict = INITIAL_BARS.filter(b => b.district === districtName);
                     const isComplete = barsInDistrict.length > 0 && barsInDistrict.every(b => gameState.bars[b.id]?.owned);
 
-                    // Style based on completion
                     const style = isComplete ? {
-                        color: '#ffd700', // Gold border
-                        weight: 2,
-                        opacity: 0.8,
-                        fillColor: '#ffd700', // Gold fill
-                        fillOpacity: 0.2
+                        color: '#ffd700', weight: 2, opacity: 0.8, fillColor: '#ffd700', fillOpacity: 0.2
                     } : {
-                        color: '#4b5563', // Gray border
-                        weight: 1,
-                        opacity: 0.5,
-                        fillColor: '#000000',
-                        fillOpacity: 0.0
+                        color: '#4b5563', weight: 1, opacity: 0.5, fillColor: '#000000', fillOpacity: 0.0
                     };
 
                     if (!polygonsRef.current[districtName]) {
                         const polygon = L.polygon(coords, style).addTo(mapRef.current);
-                        // Send to back so markers are on top
                         polygon.bringToBack();
                         polygonsRef.current[districtName] = polygon;
                     } else {
@@ -347,7 +524,6 @@
                     }
                 });
 
-                // 2. Draw/Update Markers
                 INITIAL_BARS.forEach(bar => {
                     const state = gameState.bars[bar.id] || { owned: false };
                     const cost = getUpgradeCost(bar.id);
@@ -359,12 +535,27 @@
                     else if (isAffordable) markerClass += ' marker-affordable-base';
                     else markerClass += ' marker-locked';
 
+                    // --- LEVEL BADGE LOGIC ---
+                    let levelBadgeHtml = '';
+                    if (state.owned && state.level > 0) {
+                        const isMilestone = state.level % 5 === 0;
+                        let badgeClass = 'level-badge';
+                        if (isMilestone) badgeClass += ' level-milestone';
+                        
+                        levelBadgeHtml = `<div class="${badgeClass}">${state.level}</div>`;
+                    }
+
+                    const arrowHtml = isAffordable 
+                        ? `<div class="upgrade-arrow" onclick="window.triggerUpgrade(${bar.id}, event)" title="Direkt kaufen/upgraden">⬆️</div>` 
+                        : '';
+
                     const iconHtml = `
                         <div class="bar-marker-container">
-                            ${isAffordable ? `<div class="upgrade-arrow">⬆️</div>` : ''}
+                            ${arrowHtml}
                             <div class="${markerClass}">
                                 ${state.owned ? '🍻' : '🔒'}
                             </div>
+                            ${levelBadgeHtml}
                             ${state.owned && income > 0 ? `<div class="income-badge">${formatShortMoney(income)}/s</div>` : ''}
                         </div>
                     `;
@@ -393,7 +584,6 @@
                 });
             }, [gameState.bars, gameState.money]);
 
-            // Group bars for list
             const barsByDistrict = useMemo(() => {
                 const groups = {};
                 INITIAL_BARS.forEach(bar => {
@@ -403,29 +593,6 @@
                 return groups;
             }, []);
 
-            // Action Handlers
-            const handleClicker = () => setGameState(prev => ({ ...prev, money: prev.money + getClickIncome() }));
-            const upgradeClicker = () => {
-                const cost = getClickUpgradeCost();
-                if (gameState.money >= cost) setGameState(prev => ({ ...prev, money: prev.money - cost, clickLevel: prev.clickLevel + 1 }));
-            };
-            const purchaseOrUpgradeBar = (barId) => {
-                const cost = getUpgradeCost(barId);
-                if (gameState.money >= cost) {
-                    setGameState(prev => {
-                        const newState = { ...prev, money: prev.money - cost, bars: { ...prev.bars } };
-                        newState.bars[barId] = { ...prev.bars[barId] };
-                        if (!newState.bars[barId].owned) {
-                            newState.bars[barId].owned = true;
-                            newState.bars[barId].level = 1;
-                        } else {
-                            newState.bars[barId].level += 1;
-                        }
-                        return newState;
-                    });
-                }
-            };
-
             const selectedBar = selectedBarId ? INITIAL_BARS.find(b => b.id === selectedBarId) : null;
             const selectedBarState = selectedBarId ? gameState.bars[selectedBarId] : null;
 
@@ -434,7 +601,24 @@
                     
                     <div id="map" className="absolute top-0 left-0 w-full h-full"></div>
 
-                    {/* TOAST NOTIFICATION */}
+                    {showWinModal && (
+                        <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowWinModal(false)}>
+                            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                {[...Array(50)].map((_, i) => (
+                                    <div key={i} className="confetti-piece" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 2}s`, backgroundColor: ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'][Math.floor(Math.random() * 6)] }}></div>
+                                ))}
+                            </div>
+                            <div className="bg-gray-900 border-4 border-yellow-500 rounded-3xl p-8 text-center shadow-2xl animate-fade-in max-w-lg z-50">
+                                <h1 className="text-4xl md:text-6xl font-black text-yellow-500 mb-4 drop-shadow-lg">BERLIN<br/>BAR KÖNIG!</h1>
+                                <p className="text-xl text-gray-300 mb-6">Du hast deine erste Million gemacht!<br/>Die Stadt liegt dir zu Füßen.</p>
+                                <div className="text-6xl mb-6">👑</div>
+                                <button onClick={(e) => { e.stopPropagation(); setShowWinModal(false); }} className="bg-yellow-600 hover:bg-yellow-500 text-black font-bold text-xl px-8 py-3 rounded-full transition-transform hover:scale-105">
+                                    Weiterfeiern
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {notification && (
                         <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-50 bg-yellow-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-fade-in border-2 border-yellow-400 w-max max-w-[90vw]">
                             <i data-lucide="trophy" className="w-6 h-6 flex-shrink-0"></i>
@@ -466,6 +650,15 @@
                                     <span>🏆</span>
                                     {gameState.unlockedAchievements.length > 0 && <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">{gameState.unlockedAchievements.length}</span>}
                                 </button>
+                                
+                                <button 
+                                    onClick={upgradeAll}
+                                    disabled={!canAffordAnyUpgrade}
+                                    className={`p-3 rounded-xl shadow-lg flex items-center gap-2 transition-transform border ${canAffordAnyUpgrade ? 'bg-blue-600 border-blue-400 hover:bg-blue-500 text-white active:scale-95' : 'bg-gray-800 border-gray-600 text-gray-500 opacity-50 cursor-not-allowed'}`}
+                                    title="Alles upgraden was möglich ist"
+                                >
+                                    <span className="font-bold">⚡ Alles</span>
+                                </button>
                             </div>
                         </div>
 
@@ -473,7 +666,9 @@
                             <button onClick={handleClicker} className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold p-4 md:p-6 rounded-full shadow-lg transform hover:scale-105 active:scale-95 transition-all border-4 border-yellow-600 group relative overflow-hidden">
                                 <div className="flex flex-col items-center relative z-10">
                                     <span className="text-2xl md:text-3xl group-active:animate-bounce">🍾</span>
-                                    <span className="text-xs font-bold mt-1">Sammeln</span>
+                                    <div className="text-xs font-bold mt-1 bg-black/40 px-2 rounded-full border border-yellow-300/30">
+                                        +{formatShortMoney(getClickIncome())}
+                                    </div>
                                 </div>
                                 <div className="absolute bottom-0 left-0 w-full h-1 bg-black/20"></div>
                             </button>
@@ -487,7 +682,6 @@
                         </div>
                     </div>
 
-                    {/* ACHIEVEMENTS MODAL */}
                     {showAchievements && (
                         <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAchievements(false)}>
                             <div className="bg-gray-900 border border-gray-600 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -516,7 +710,6 @@
                         </div>
                     )}
 
-                    {/* BAR SELECTION PANEL */}
                     {selectedBar && (
                         <div className="absolute bottom-0 left-0 right-0 md:left-auto md:right-4 md:bottom-4 md:w-96 md:top-24 z-30 p-4 animate-slide-up pointer-events-none md:pointer-events-auto">
                             <div className="bg-gray-900/95 backdrop-blur border border-gray-700 rounded-xl p-6 text-white shadow-2xl relative pointer-events-auto">
@@ -535,7 +728,12 @@
                                 <div className="grid grid-cols-2 gap-4 mb-6">
                                     <div className="bg-gray-800 p-3 rounded-lg">
                                         <div className="text-xs text-gray-500">Level</div>
-                                        <div className="text-xl font-bold text-white flex items-center gap-2">{selectedBarState.level} {selectedBarState.level > 0 && selectedBarState.level % 5 === 0 && <span className="text-[10px] bg-yellow-600 text-white px-1.5 py-0.5 rounded">x{Math.pow(2, Math.floor(selectedBarState.level / 5))} Boost!</span>}</div>
+                                        <div className="text-xl font-bold text-white flex items-center gap-2">
+                                            {selectedBarState.level} 
+                                            <span className="text-[10px] bg-yellow-600 text-white px-1.5 py-0.5 rounded">
+                                                x{Math.pow(2, Math.floor(selectedBarState.level / 5))} Boost
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="bg-gray-800 p-3 rounded-lg">
                                         <div className="text-xs text-gray-500">Einkommen</div>
@@ -546,12 +744,11 @@
                                     <span>{selectedBarState.owned ? "Ausbauen" : "Kaufen"}</span>
                                     <span>{formatMoney(getUpgradeCost(selectedBar.id))}</span>
                                 </button>
-                                <div className="mt-2 text-center text-xs text-gray-500">Nächster x2 Ertrags-Boost bei Level {Math.ceil((selectedBarState.level + 1) / 5) * 5}</div>
+                                <div className="mt-2 text-center text-xs text-gray-500">Nächster x2 Boost bei Level {Math.ceil((selectedBarState.level + 1) / 5) * 5}</div>
                             </div>
                         </div>
                     )}
 
-                    {/* BAR LIST */}
                     <div className={`absolute top-24 left-4 z-20 transition-all duration-300 ${isListOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none'}`}>
                         <div className="bg-gray-900/90 backdrop-blur border border-gray-700 rounded-xl overflow-hidden shadow-xl w-72 max-h-[70vh] flex flex-col pointer-events-auto">
                             <div className="p-3 border-b border-gray-700 bg-gray-800/50 font-bold text-sm text-gray-300 flex justify-between items-center">
