@@ -62,18 +62,18 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // --- GAME DATA: REAL BERLIN BARS ---
+        // --- GAME DATA: REAL BERLIN BARS (Parodied for Safety) ---
         const INITIAL_BARS = [
-            { id: 1, name: "Ä (Neukölln)", lat: 52.4808, lng: 13.4261, baseCost: 100, baseIncome: 1, type: "Kneipe", description: "Der Klassiker in Neukölln. Tischkicker und billiges Bier." },
-            { id: 2, name: "Klunkerkranich", lat: 52.4825, lng: 13.4330, baseCost: 500, baseIncome: 4, type: "Rooftop", description: "Über den Dächern der Arcaden. Perfekt für Sonnenuntergänge." },
-            { id: 3, name: "Club der Visionäre", lat: 52.4965, lng: 13.4520, baseCost: 1200, baseIncome: 10, type: "Outdoor", description: "Am Flutgraben. Elektronische Musik am Nachmittag." },
-            { id: 4, name: "Roses Bar", lat: 52.4975, lng: 13.4185, baseCost: 2500, baseIncome: 25, type: "Kult", description: "Plüschig, pink und legendär in Kreuzberg." },
-            { id: 5, name: "Monkey Bar", lat: 52.5053, lng: 13.3364, baseCost: 5000, baseIncome: 45, type: "Chic", description: "Blick auf den Zoo. Teure Drinks, geile Aussicht." },
-            { id: 6, name: "Tresor", lat: 52.5106, lng: 13.4194, baseCost: 10000, baseIncome: 90, type: "Club", description: "Techno-Institution im alten Heizkraftwerk." },
-            { id: 7, name: "Prater Biergarten", lat: 52.5404, lng: 13.4107, baseCost: 20000, baseIncome: 180, type: "Biergarten", description: "Der älteste Biergarten Berlins im Prenzlauer Berg." },
-            { id: 8, name: "Watergate", lat: 52.5008, lng: 13.4445, baseCost: 45000, baseIncome: 350, type: "Club", description: "Direkt an der Spree mit LED-Decke." },
-            { id: 9, name: "Berghain", lat: 52.5113, lng: 13.4433, baseCost: 100000, baseIncome: 800, type: "Legendär", description: "Wenn du reinkommst. Die härteste Tür der Welt." },
-            { id: 10, name: "KitKatClub", lat: 52.5126, lng: 13.4165, baseCost: 250000, baseIncome: 1500, type: "Legendär", description: "Hier passiert alles. Wirklich alles." }
+            { id: 1, name: "Das Ö (Neukölln)", lat: 52.4808, lng: 13.4261, baseCost: 100, baseIncome: 1, type: "Kneipe", description: "Die urigste Kneipe in Neukölln. Tischkicker und billiges Bier." },
+            { id: 2, name: "Flunker-Kranich", lat: 52.4825, lng: 13.4330, baseCost: 500, baseIncome: 4, type: "Rooftop", description: "Über den Dächern der Arcaden. Perfekt für Sonnenuntergänge." },
+            { id: 3, name: "Club der Illusionäre", lat: 52.4965, lng: 13.4520, baseCost: 1200, baseIncome: 10, type: "Outdoor", description: "Am Flutgraben. Elektronische Musik am Nachmittag." },
+            { id: 4, name: "Pink Palace", lat: 52.4975, lng: 13.4185, baseCost: 2500, baseIncome: 25, type: "Kult", description: "Plüschig, pink und legendär in Kreuzberg." },
+            { id: 5, name: "Ape Lounge", lat: 52.5053, lng: 13.3364, baseCost: 5000, baseIncome: 45, type: "Chic", description: "Blick auf den Zoo. Teure Drinks, geile Aussicht." },
+            { id: 6, name: "Der Safe", lat: 52.5106, lng: 13.4194, baseCost: 10000, baseIncome: 90, type: "Club", description: "Techno-Institution im alten Heizkraftwerk." },
+            { id: 7, name: "Panke Garten", lat: 52.5404, lng: 13.4107, baseCost: 20000, baseIncome: 180, type: "Biergarten", description: "Der älteste Biergarten Berlins im Prenzlauer Berg." },
+            { id: 8, name: "Floodgate", lat: 52.5008, lng: 13.4445, baseCost: 45000, baseIncome: 350, type: "Club", description: "Direkt an der Spree mit LED-Decke." },
+            { id: 9, name: "Bergheim", lat: 52.5113, lng: 13.4433, baseCost: 100000, baseIncome: 800, type: "Legendär", description: "Wenn du reinkommst. Die härteste Tür der Welt." },
+            { id: 10, name: "KittyKat", lat: 52.5126, lng: 13.4165, baseCost: 250000, baseIncome: 1500, type: "Legendär", description: "Hier passiert alles. Wirklich alles." }
         ];
 
         // Format Currency
