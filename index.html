@@ -51,6 +51,9 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #333; }
         ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+        .animate-slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -80,13 +83,22 @@
 
         const App = () => {
             // --- STATE ---
-            const [money, setMoney] = useState(0);
+            
+            // 1. Initialize Money from LocalStorage
+            const [money, setMoney] = useState(() => {
+                const saved = localStorage.getItem('berlinBarTycoon');
+                return saved ? (JSON.parse(saved).money || 0) : 0;
+            });
+
+            // 2. Initialize Game State (Bars) from LocalStorage
             const [gameState, setGameState] = useState(() => {
                 const saved = localStorage.getItem('berlinBarTycoon');
                 if (saved) {
-                    return JSON.parse(saved);
+                    const parsed = JSON.parse(saved);
+                    // Handle migration if structure changed or just return bars
+                    return parsed.bars ? { bars: parsed.bars } : parsed; 
                 }
-                // Initialize ownership map
+                // Initialize ownership map if no save exists
                 const initialOwnership = {};
                 INITIAL_BARS.forEach(bar => {
                     initialOwnership[bar.id] = { level: 0, owned: false };
@@ -95,6 +107,8 @@
             });
 
             const [selectedBarId, setSelectedBarId] = useState(null);
+            const [isListOpen, setIsListOpen] = useState(false); // Mobile List Toggle
+            
             const mapRef = useRef(null);
             const markersRef = useRef({});
 
@@ -129,15 +143,19 @@
                 return () => clearInterval(interval);
             }, [gameState]);
 
-            // Save loop
+            // --- SAVE LOOP (Fix: Saves both Money and Bars) ---
             useEffect(() => {
-                localStorage.setItem('berlinBarTycoon', JSON.stringify(gameState));
-            }, [gameState]);
+                const dataToSave = {
+                    money: money,
+                    bars: gameState.bars
+                };
+                localStorage.setItem('berlinBarTycoon', JSON.stringify(dataToSave));
+            }, [gameState, money]);
 
 
             // --- ACTIONS ---
             const handleClicker = () => {
-                setMoney(m => m + 10 + (getTotalIncome() * 0.1)); // Active click gets boost from passive
+                setMoney(m => m + 10 + (getTotalIncome() * 0.1)); 
             };
 
             const purchaseOrUpgrade = (barId) => {
@@ -146,6 +164,10 @@
                     setMoney(m => m - cost);
                     setGameState(prev => {
                         const newState = { ...prev };
+                        // Deep copy needed for nested objects in state updates to be safe
+                        newState.bars = { ...prev.bars };
+                        newState.bars[barId] = { ...prev.bars[barId] };
+
                         const barState = newState.bars[barId];
                         
                         if (!barState.owned) {
@@ -162,13 +184,11 @@
             // --- MAP INITIALIZATION ---
             useEffect(() => {
                 if (!mapRef.current) {
-                    // Init Map centered on Berlin
                     mapRef.current = L.map('map', {
                         zoomControl: false,
                         attributionControl: false
                     }).setView([52.50, 13.40], 12);
 
-                    // Add Dark Matter Tiles (CartoDB) - Perfect for "Nightlife"
                     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
                         subdomains: 'abcd',
@@ -176,7 +196,6 @@
                     }).addTo(mapRef.current);
                 }
 
-                // Update Markers
                 INITIAL_BARS.forEach(bar => {
                     const state = gameState.bars[bar.id];
                     const cost = getUpgradeCost(bar.id);
@@ -201,8 +220,8 @@
                             .addTo(mapRef.current)
                             .on('click', () => {
                                 setSelectedBarId(bar.id);
-                                // Pan to marker slightly offset to accommodate UI
                                 mapRef.current.setView([bar.lat + 0.005, bar.lng], 14);
+                                setIsListOpen(false); // Close list when clicking marker
                             });
                         markersRef.current[bar.id] = marker;
                     } else {
@@ -210,9 +229,8 @@
                     }
                 });
 
-            }, [gameState, money]); // Re-render markers when state or money changes
+            }, [gameState, money]);
 
-            // Helper to get selected bar details
             const selectedBar = selectedBarId ? INITIAL_BARS.find(b => b.id === selectedBarId) : null;
             const selectedBarState = selectedBarId ? gameState.bars[selectedBarId] : null;
 
@@ -224,28 +242,40 @@
 
                     {/* TOP HUD */}
                     <div className="absolute top-0 left-0 w-full p-4 z-20 pointer-events-none flex justify-between items-start">
-                        <div className="bg-gray-900/90 backdrop-blur border border-gray-700 p-4 rounded-xl shadow-2xl pointer-events-auto flex flex-col gap-1 min-w-[200px]">
-                            <div className="text-gray-400 text-xs uppercase tracking-wider font-bold">Kontostand</div>
-                            <div className="text-3xl font-bold text-green-400">{formatMoney(money)}</div>
-                            <div className="text-sm text-gray-300 flex items-center gap-1">
-                                <i data-lucide="trending-up" className="w-4 h-4"></i> 
-                                {formatMoney(getTotalIncome())} / Sek.
+                        <div className="flex flex-col gap-2">
+                            {/* Money Display */}
+                            <div className="bg-gray-900/90 backdrop-blur border border-gray-700 p-4 rounded-xl shadow-2xl pointer-events-auto flex flex-col gap-1 min-w-[160px]">
+                                <div className="text-gray-400 text-xs uppercase tracking-wider font-bold">Kontostand</div>
+                                <div className="text-2xl md:text-3xl font-bold text-green-400">{formatMoney(money)}</div>
+                                <div className="text-sm text-gray-300 flex items-center gap-1">
+                                    <i data-lucide="trending-up" className="w-4 h-4"></i> 
+                                    {formatMoney(getTotalIncome())} / Sek.
+                                </div>
                             </div>
+                            
+                            {/* Mobile List Toggle Button */}
+                            <button 
+                                onClick={() => setIsListOpen(!isListOpen)}
+                                className="pointer-events-auto bg-gray-800 border border-gray-600 text-white p-3 rounded-xl shadow-lg lg:hidden flex items-center gap-2 w-fit hover:bg-gray-700 active:scale-95 transition-transform"
+                            >
+                                <span className="text-xl">📋</span>
+                                <span className="font-bold text-sm">{isListOpen ? 'Liste schließen' : 'Locations'}</span>
+                            </button>
                         </div>
 
                         {/* CLICKER BUTTON */}
                         <button 
                             onClick={handleClicker}
-                            className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold p-4 rounded-full shadow-lg pointer-events-auto transform hover:scale-105 active:scale-95 transition-all border-4 border-yellow-600 group"
+                            className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold p-3 md:p-4 rounded-full shadow-lg pointer-events-auto transform hover:scale-105 active:scale-95 transition-all border-4 border-yellow-600 group"
                         >
                             <div className="flex flex-col items-center">
                                 <span className="text-2xl group-active:animate-bounce">🍾</span>
-                                <span className="text-xs font-bold">Sammeln</span>
+                                <span className="text-xs font-bold hidden md:block">Sammeln</span>
                             </div>
                         </button>
                     </div>
 
-                    {/* BAR SELECTION PANEL (Bottom Sheet style on Mobile, Sidebar on Desktop) */}
+                    {/* BAR SELECTION PANEL (Bottom Sheet) */}
                     {selectedBar && (
                         <div className="absolute bottom-0 left-0 right-0 md:left-auto md:right-4 md:bottom-4 md:w-96 md:top-24 z-30 p-4 animate-slide-up">
                             <div className="bg-gray-900/95 backdrop-blur border border-gray-700 rounded-xl p-6 text-white shadow-2xl relative">
@@ -292,24 +322,19 @@
                                             : 'bg-gray-700 text-gray-500 cursor-not-allowed'}
                                     `}
                                 >
-                                    <span>{selectedBarState.owned ? "Bar Ausbauen" : "Laden Kaufen"}</span>
+                                    <span>{selectedBarState.owned ? "Ausbauen" : "Kaufen"}</span>
                                     <span>{formatMoney(getUpgradeCost(selectedBar.id))}</span>
                                 </button>
-                                
-                                {!selectedBarState.owned && (
-                                    <div className="text-center mt-3 text-xs text-gray-500">
-                                        Basis Einkommen: {formatMoney(selectedBar.baseIncome)}/s
-                                    </div>
-                                )}
                             </div>
                         </div>
                     )}
 
-                    {/* BAR LIST (Always visible on large screens, or toggleable) */}
-                    <div className="absolute top-24 left-4 z-20 hidden lg:block">
-                        <div className="bg-gray-900/80 backdrop-blur border border-gray-700 rounded-xl overflow-hidden shadow-xl w-64 max-h-[70vh] flex flex-col">
-                            <div className="p-3 border-b border-gray-700 bg-gray-800/50 font-bold text-sm text-gray-300">
-                                Verfügbare Locations
+                    {/* BAR LIST (Sidebar / Mobile Toggleable) */}
+                    <div className={`absolute top-44 md:top-24 left-4 z-20 transition-all duration-300 ${isListOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none lg:pointer-events-auto lg:opacity-100 lg:translate-x-0'}`}>
+                        <div className="bg-gray-900/90 backdrop-blur border border-gray-700 rounded-xl overflow-hidden shadow-xl w-64 max-h-[50vh] lg:max-h-[70vh] flex flex-col">
+                            <div className="p-3 border-b border-gray-700 bg-gray-800/50 font-bold text-sm text-gray-300 flex justify-between items-center">
+                                <span>Verfügbare Locations</span>
+                                <button onClick={() => setIsListOpen(false)} className="lg:hidden text-gray-400">✕</button>
                             </div>
                             <div className="overflow-y-auto flex-1 p-2 space-y-2">
                                 {INITIAL_BARS.map(bar => {
@@ -320,6 +345,7 @@
                                             onClick={() => {
                                                 setSelectedBarId(bar.id);
                                                 mapRef.current.setView([bar.lat, bar.lng], 14);
+                                                if (window.innerWidth < 1024) setIsListOpen(false);
                                             }}
                                             className={`p-3 rounded cursor-pointer transition-colors border-l-4 ${state.owned ? 'border-green-500 bg-gray-800/50 hover:bg-gray-700' : 'border-red-900 bg-gray-900/30 hover:bg-gray-800'} ${selectedBarId === bar.id ? 'bg-gray-700' : ''}`}
                                         >
@@ -337,14 +363,13 @@
                     
                     {/* TUTORIAL / WELCOME */}
                     {money === 0 && !Object.values(gameState.bars).some(b => b.owned) && (
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/90 p-8 rounded-2xl border border-yellow-500 text-center max-w-md shadow-2xl">
-                            <h1 className="text-3xl font-bold text-yellow-500 mb-2">Berlin Bar Tycoon</h1>
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/90 p-8 rounded-2xl border border-yellow-500 text-center max-w-md shadow-2xl w-[90%] md:w-auto">
+                            <h1 className="text-2xl md:text-3xl font-bold text-yellow-500 mb-2">Berlin Bar Tycoon</h1>
                             <p className="text-gray-300 mb-6">Willkommen im Nachtleben! Deine Taschen sind leer.</p>
                             <ol className="text-left text-sm text-gray-400 space-y-2 mb-6 list-decimal list-inside bg-gray-900 p-4 rounded">
-                                <li>Klicke oben rechts auf den <strong>Sammeln</strong> Button für Startkapital.</li>
-                                <li>Suche <strong>gelb pulsierende</strong> Bars auf der Karte.</li>
-                                <li>Kaufe deine erste Kneipe (z.B. "Ä" in Neukölln).</li>
-                                <li>Lehne dich zurück und werde reich!</li>
+                                <li>Sammle Pfand mit dem <strong>Button rechts oben</strong>.</li>
+                                <li>Kaufe Bars auf der Karte (gelb = bezahlbar).</li>
+                                <li>Nutze das <strong>Menü links</strong> für die Liste.</li>
                             </ol>
                             <button onClick={() => setMoney(10)} className="bg-yellow-600 hover:bg-yellow-500 text-white px-6 py-2 rounded-full font-bold transition-all">
                                 Los geht's!
