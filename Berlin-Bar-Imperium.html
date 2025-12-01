@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berlin Bar Tycoon</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS & JS (For the Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { background-color: #1a1a1a; color: white; overflow: hidden; }
+        #map { height: 100vh; width: 100vw; z-index: 0; }
+        
+        /* Custom Map Marker Styles */
+        .bar-marker {
+            transition: all 0.3s ease;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .marker-locked { background-color: #ef4444; opacity: 0.7; } /* Red */
+        .marker-owned { background-color: #22c55e; box-shadow: 0 0 15px #22c55e; z-index: 1000 !important;} /* Green */
+        .marker-affordable { animation: pulse 2s infinite; background-color: #eab308; } /* Yellow */
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+        }
+
+        /* Scrollbar for the list */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #333; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- GAME DATA: REAL BERLIN BARS ---
+        const INITIAL_BARS = [
+            { id: 1, name: "Ä (Neukölln)", lat: 52.4808, lng: 13.4261, baseCost: 100, baseIncome: 1, type: "Kneipe", description: "Der Klassiker in Neukölln. Tischkicker und billiges Bier." },
+            { id: 2, name: "Klunkerkranich", lat: 52.4825, lng: 13.4330, baseCost: 500, baseIncome: 4, type: "Rooftop", description: "Über den Dächern der Arcaden. Perfekt für Sonnenuntergänge." },
+            { id: 3, name: "Club der Visionäre", lat: 52.4965, lng: 13.4520, baseCost: 1200, baseIncome: 10, type: "Outdoor", description: "Am Flutgraben. Elektronische Musik am Nachmittag." },
+            { id: 4, name: "Roses Bar", lat: 52.4975, lng: 13.4185, baseCost: 2500, baseIncome: 25, type: "Kult", description: "Plüschig, pink und legendär in Kreuzberg." },
+            { id: 5, name: "Monkey Bar", lat: 52.5053, lng: 13.3364, baseCost: 5000, baseIncome: 45, type: "Chic", description: "Blick auf den Zoo. Teure Drinks, geile Aussicht." },
+            { id: 6, name: "Tresor", lat: 52.5106, lng: 13.4194, baseCost: 10000, baseIncome: 90, type: "Club", description: "Techno-Institution im alten Heizkraftwerk." },
+            { id: 7, name: "Prater Biergarten", lat: 52.5404, lng: 13.4107, baseCost: 20000, baseIncome: 180, type: "Biergarten", description: "Der älteste Biergarten Berlins im Prenzlauer Berg." },
+            { id: 8, name: "Watergate", lat: 52.5008, lng: 13.4445, baseCost: 45000, baseIncome: 350, type: "Club", description: "Direkt an der Spree mit LED-Decke." },
+            { id: 9, name: "Berghain", lat: 52.5113, lng: 13.4433, baseCost: 100000, baseIncome: 800, type: "Legendär", description: "Wenn du reinkommst. Die härteste Tür der Welt." },
+            { id: 10, name: "KitKatClub", lat: 52.5126, lng: 13.4165, baseCost: 250000, baseIncome: 1500, type: "Legendär", description: "Hier passiert alles. Wirklich alles." }
+        ];
+
+        // Format Currency
+        const formatMoney = (amount) => {
+            return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
+        };
+
+        const App = () => {
+            // --- STATE ---
+            const [money, setMoney] = useState(0);
+            const [gameState, setGameState] = useState(() => {
+                const saved = localStorage.getItem('berlinBarTycoon');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+                // Initialize ownership map
+                const initialOwnership = {};
+                INITIAL_BARS.forEach(bar => {
+                    initialOwnership[bar.id] = { level: 0, owned: false };
+                });
+                return { bars: initialOwnership };
+            });
+
+            const [selectedBarId, setSelectedBarId] = useState(null);
+            const mapRef = useRef(null);
+            const markersRef = useRef({});
+
+            // --- CALCULATIONS ---
+            const getIncome = (barId) => {
+                const bar = INITIAL_BARS.find(b => b.id === barId);
+                const state = gameState.bars[barId];
+                if (!state.owned) return 0;
+                return bar.baseIncome * state.level;
+            };
+
+            const getTotalIncome = () => {
+                return INITIAL_BARS.reduce((sum, bar) => sum + getIncome(bar.id), 0);
+            };
+
+            const getUpgradeCost = (barId) => {
+                const bar = INITIAL_BARS.find(b => b.id === barId);
+                const state = gameState.bars[barId];
+                if (!state.owned) return bar.baseCost;
+                // Cost increases by 1.5x per level
+                return Math.floor(bar.baseCost * Math.pow(1.5, state.level));
+            };
+
+            // --- GAME LOOP ---
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    const income = getTotalIncome();
+                    if (income > 0) {
+                        setMoney(m => m + income);
+                    }
+                }, 1000);
+                return () => clearInterval(interval);
+            }, [gameState]);
+
+            // Save loop
+            useEffect(() => {
+                localStorage.setItem('berlinBarTycoon', JSON.stringify(gameState));
+            }, [gameState]);
+
+
+            // --- ACTIONS ---
+            const handleClicker = () => {
+                setMoney(m => m + 10 + (getTotalIncome() * 0.1)); // Active click gets boost from passive
+            };
+
+            const purchaseOrUpgrade = (barId) => {
+                const cost = getUpgradeCost(barId);
+                if (money >= cost) {
+                    setMoney(m => m - cost);
+                    setGameState(prev => {
+                        const newState = { ...prev };
+                        const barState = newState.bars[barId];
+                        
+                        if (!barState.owned) {
+                            barState.owned = true;
+                            barState.level = 1;
+                        } else {
+                            barState.level += 1;
+                        }
+                        return newState;
+                    });
+                }
+            };
+
+            // --- MAP INITIALIZATION ---
+            useEffect(() => {
+                if (!mapRef.current) {
+                    // Init Map centered on Berlin
+                    mapRef.current = L.map('map', {
+                        zoomControl: false,
+                        attributionControl: false
+                    }).setView([52.50, 13.40], 12);
+
+                    // Add Dark Matter Tiles (CartoDB) - Perfect for "Nightlife"
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                        subdomains: 'abcd',
+                        maxZoom: 19
+                    }).addTo(mapRef.current);
+                }
+
+                // Update Markers
+                INITIAL_BARS.forEach(bar => {
+                    const state = gameState.bars[bar.id];
+                    const cost = getUpgradeCost(bar.id);
+                    const isAffordable = money >= cost && !state.owned;
+                    
+                    let className = 'bar-marker';
+                    if (state.owned) className += ' marker-owned';
+                    else if (isAffordable) className += ' marker-affordable';
+                    else className += ' marker-locked';
+
+                    const iconHtml = state.owned ? `🍻` : `🔒`;
+
+                    const customIcon = L.divIcon({
+                        className: className,
+                        html: `<span style="pointer-events:none">${iconHtml}</span>`,
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    });
+
+                    if (!markersRef.current[bar.id]) {
+                        const marker = L.marker([bar.lat, bar.lng], { icon: customIcon })
+                            .addTo(mapRef.current)
+                            .on('click', () => {
+                                setSelectedBarId(bar.id);
+                                // Pan to marker slightly offset to accommodate UI
+                                mapRef.current.setView([bar.lat + 0.005, bar.lng], 14);
+                            });
+                        markersRef.current[bar.id] = marker;
+                    } else {
+                        markersRef.current[bar.id].setIcon(customIcon);
+                    }
+                });
+
+            }, [gameState, money]); // Re-render markers when state or money changes
+
+            // Helper to get selected bar details
+            const selectedBar = selectedBarId ? INITIAL_BARS.find(b => b.id === selectedBarId) : null;
+            const selectedBarState = selectedBarId ? gameState.bars[selectedBarId] : null;
+
+            return (
+                <div className="relative h-screen w-screen font-sans">
+                    
+                    {/* MAP CONTAINER */}
+                    <div id="map" className="absolute top-0 left-0 w-full h-full"></div>
+
+                    {/* TOP HUD */}
+                    <div className="absolute top-0 left-0 w-full p-4 z-20 pointer-events-none flex justify-between items-start">
+                        <div className="bg-gray-900/90 backdrop-blur border border-gray-700 p-4 rounded-xl shadow-2xl pointer-events-auto flex flex-col gap-1 min-w-[200px]">
+                            <div className="text-gray-400 text-xs uppercase tracking-wider font-bold">Kontostand</div>
+                            <div className="text-3xl font-bold text-green-400">{formatMoney(money)}</div>
+                            <div className="text-sm text-gray-300 flex items-center gap-1">
+                                <i data-lucide="trending-up" className="w-4 h-4"></i> 
+                                {formatMoney(getTotalIncome())} / Sek.
+                            </div>
+                        </div>
+
+                        {/* CLICKER BUTTON */}
+                        <button 
+                            onClick={handleClicker}
+                            className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold p-4 rounded-full shadow-lg pointer-events-auto transform hover:scale-105 active:scale-95 transition-all border-4 border-yellow-600 group"
+                        >
+                            <div className="flex flex-col items-center">
+                                <span className="text-2xl group-active:animate-bounce">🍾</span>
+                                <span className="text-xs font-bold">Sammeln</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    {/* BAR SELECTION PANEL (Bottom Sheet style on Mobile, Sidebar on Desktop) */}
+                    {selectedBar && (
+                        <div className="absolute bottom-0 left-0 right-0 md:left-auto md:right-4 md:bottom-4 md:w-96 md:top-24 z-30 p-4 animate-slide-up">
+                            <div className="bg-gray-900/95 backdrop-blur border border-gray-700 rounded-xl p-6 text-white shadow-2xl relative">
+                                <button 
+                                    onClick={() => setSelectedBarId(null)}
+                                    className="absolute top-2 right-2 text-gray-400 hover:text-white p-2"
+                                >
+                                    ✕
+                                </button>
+
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${selectedBarState.owned ? 'bg-green-600' : 'bg-red-600'}`}>
+                                        {selectedBarState.owned ? '🏢' : '🔒'}
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold">{selectedBar.name}</h2>
+                                        <div className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded inline-block mt-1">{selectedBar.type}</div>
+                                    </div>
+                                </div>
+                                
+                                <p className="text-sm text-gray-300 mb-6 italic border-l-2 border-gray-600 pl-3">
+                                    "{selectedBar.description}"
+                                </p>
+
+                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                    <div className="bg-gray-800 p-3 rounded-lg">
+                                        <div className="text-xs text-gray-500">Level</div>
+                                        <div className="text-xl font-bold text-white">{selectedBarState.level}</div>
+                                    </div>
+                                    <div className="bg-gray-800 p-3 rounded-lg">
+                                        <div className="text-xs text-gray-500">Einkommen</div>
+                                        <div className="text-xl font-bold text-green-400">
+                                            {formatMoney(getIncome(selectedBar.id))}<span className="text-xs text-gray-500">/s</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    onClick={() => purchaseOrUpgrade(selectedBar.id)}
+                                    disabled={money < getUpgradeCost(selectedBar.id)}
+                                    className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex justify-between px-6 items-center
+                                        ${money >= getUpgradeCost(selectedBar.id) 
+                                            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/50' 
+                                            : 'bg-gray-700 text-gray-500 cursor-not-allowed'}
+                                    `}
+                                >
+                                    <span>{selectedBarState.owned ? "Bar Ausbauen" : "Laden Kaufen"}</span>
+                                    <span>{formatMoney(getUpgradeCost(selectedBar.id))}</span>
+                                </button>
+                                
+                                {!selectedBarState.owned && (
+                                    <div className="text-center mt-3 text-xs text-gray-500">
+                                        Basis Einkommen: {formatMoney(selectedBar.baseIncome)}/s
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* BAR LIST (Always visible on large screens, or toggleable) */}
+                    <div className="absolute top-24 left-4 z-20 hidden lg:block">
+                        <div className="bg-gray-900/80 backdrop-blur border border-gray-700 rounded-xl overflow-hidden shadow-xl w-64 max-h-[70vh] flex flex-col">
+                            <div className="p-3 border-b border-gray-700 bg-gray-800/50 font-bold text-sm text-gray-300">
+                                Verfügbare Locations
+                            </div>
+                            <div className="overflow-y-auto flex-1 p-2 space-y-2">
+                                {INITIAL_BARS.map(bar => {
+                                    const state = gameState.bars[bar.id];
+                                    return (
+                                        <div 
+                                            key={bar.id}
+                                            onClick={() => {
+                                                setSelectedBarId(bar.id);
+                                                mapRef.current.setView([bar.lat, bar.lng], 14);
+                                            }}
+                                            className={`p-3 rounded cursor-pointer transition-colors border-l-4 ${state.owned ? 'border-green-500 bg-gray-800/50 hover:bg-gray-700' : 'border-red-900 bg-gray-900/30 hover:bg-gray-800'} ${selectedBarId === bar.id ? 'bg-gray-700' : ''}`}
+                                        >
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-medium text-sm">{bar.name}</span>
+                                                {state.owned && <span className="text-xs bg-green-900 text-green-300 px-1.5 rounded">Lvl {state.level}</span>}
+                                            </div>
+                                            {!state.owned && <div className="text-xs text-gray-500 mt-1">Kosten: {formatMoney(bar.baseCost)}</div>}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* TUTORIAL / WELCOME */}
+                    {money === 0 && !Object.values(gameState.bars).some(b => b.owned) && (
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/90 p-8 rounded-2xl border border-yellow-500 text-center max-w-md shadow-2xl">
+                            <h1 className="text-3xl font-bold text-yellow-500 mb-2">Berlin Bar Tycoon</h1>
+                            <p className="text-gray-300 mb-6">Willkommen im Nachtleben! Deine Taschen sind leer.</p>
+                            <ol className="text-left text-sm text-gray-400 space-y-2 mb-6 list-decimal list-inside bg-gray-900 p-4 rounded">
+                                <li>Klicke oben rechts auf den <strong>Sammeln</strong> Button für Startkapital.</li>
+                                <li>Suche <strong>gelb pulsierende</strong> Bars auf der Karte.</li>
+                                <li>Kaufe deine erste Kneipe (z.B. "Ä" in Neukölln).</li>
+                                <li>Lehne dich zurück und werde reich!</li>
+                            </ol>
+                            <button onClick={() => setMoney(10)} className="bg-yellow-600 hover:bg-yellow-500 text-white px-6 py-2 rounded-full font-bold transition-all">
+                                Los geht's!
+                            </button>
+                        </div>
+                    )}
+
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
