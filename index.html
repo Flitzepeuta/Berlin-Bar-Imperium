@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berlin Bar Tycoon - Optimized Territory</title>
+    <title>Berlin Bar Tycoon - Fixed</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -24,30 +24,15 @@
 
     <style>
         body { background-color: #1a1a1a; color: white; overflow: hidden; }
-        #map { height: 100vh; width: 100vw; z-index: 0; }
+        #map { height: 100vh; width: 100vw; z-index: 0; background-color: #000; }
         
-        /* Map Marker Styles */
         .bar-marker-container {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-
         .bar-marker {
-            transition: all 0.3s ease;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            width: 30px;
-            height: 30px;
-            background-color: #333;
-            z-index: 10;
+            transition: all 0.3s ease; border-radius: 50%; border: 2px solid white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            font-size: 16px; width: 30px; height: 30px; background-color: #333; z-index: 10;
         }
         
         .marker-locked { background-color: #ef4444; opacity: 0.8; }
@@ -55,131 +40,67 @@
         .marker-affordable-base { background-color: #eab308; }
 
         .upgrade-arrow {
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #4ade80;
-            font-size: 24px;
-            font-weight: bold;
-            animation: bounce 1s infinite;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            z-index: 100;
-            cursor: pointer;
-            pointer-events: auto !important;
-            filter: drop-shadow(0 0 2px black);
+            position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+            color: #4ade80; font-size: 24px; font-weight: bold; animation: bounce 1s infinite;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 100; cursor: pointer;
+            pointer-events: auto !important; filter: drop-shadow(0 0 2px black);
         }
         .upgrade-arrow:hover { transform: translateX(-50%) scale(1.2); color: #22c55e; }
 
         .income-badge {
-            position: absolute;
-            bottom: -18px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #4ade80;
-            font-size: 10px;
-            padding: 1px 4px;
-            border-radius: 4px;
-            white-space: nowrap;
-            font-weight: bold;
-            border: 1px solid #22c55e;
-            z-index: 20;
-            pointer-events: none;
+            position: absolute; bottom: -18px; background-color: rgba(0, 0, 0, 0.8);
+            color: #4ade80; font-size: 10px; padding: 1px 4px; border-radius: 4px;
+            white-space: nowrap; font-weight: bold; border: 1px solid #22c55e; z-index: 20; pointer-events: none;
         }
 
         .level-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 16px;
-            height: 16px;
-            background-color: #374151; /* Gray-700 */
-            color: white;
-            border: 1px solid white;
-            border-radius: 50%;
-            font-size: 9px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 25;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            transition: all 0.5s ease;
+            position: absolute; top: -5px; right: -5px; width: 16px; height: 16px;
+            background-color: #374151; color: white; border: 1px solid white;
+            border-radius: 50%; font-size: 9px; font-weight: bold; display: flex;
+            align-items: center; justify-content: center; z-index: 25;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5); transition: all 0.5s ease;
         }
 
-        /* Persistent Level Tiers */
-        .level-tier-1 { /* 5-9: Gold */
-            background-color: #fbbf24; color: black; border-color: #f59e0b;
-            box-shadow: 0 0 8px rgba(251, 191, 36, 0.6); animation: pulse-gold 3s infinite;
-        }
-        .level-tier-2 { /* 10-24: Cyan */
-            background-color: #22d3ee; color: black; border-color: #06b6d4;
-            box-shadow: 0 0 10px rgba(34, 211, 238, 0.6); animation: pulse-cyan 3s infinite;
-        }
-        .level-tier-3 { /* 25+: Purple */
-            background-color: #d8b4fe; color: black; border-color: #a855f7;
-            box-shadow: 0 0 12px rgba(168, 85, 247, 0.8); animation: pulse-purple 2s infinite;
-        }
+        .level-tier-1 { background-color: #fbbf24; color: black; border-color: #f59e0b; box-shadow: 0 0 8px rgba(251, 191, 36, 0.6); animation: pulse-gold 3s infinite; }
+        .level-tier-2 { background-color: #22d3ee; color: black; border-color: #06b6d4; box-shadow: 0 0 10px rgba(34, 211, 238, 0.6); animation: pulse-cyan 3s infinite; }
+        .level-tier-3 { background-color: #d8b4fe; color: black; border-color: #a855f7; box-shadow: 0 0 12px rgba(168, 85, 247, 0.8); animation: pulse-purple 2s infinite; }
 
         @keyframes pulse-gold { 50% { box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); } }
         @keyframes pulse-cyan { 50% { box-shadow: 0 0 15px rgba(34, 211, 238, 0.4); } }
         @keyframes pulse-purple { 50% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.5); } }
 
         .float-text {
-            position: absolute;
-            top: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 14px;
-            text-shadow: 0 2px 4px rgba(0,0,0,1);
-            animation: floatUp 1s forwards;
-            pointer-events: none;
-            z-index: 200;
-            white-space: nowrap;
+            position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
+            color: #ffffff; font-weight: bold; font-size: 14px; text-shadow: 0 2px 4px rgba(0,0,0,1);
+            animation: floatUp 1s forwards; pointer-events: none; z-index: 200; white-space: nowrap;
         }
 
         .money-particle {
-            position: absolute;
-            color: #4ade80;
-            font-weight: bold;
-            font-size: 10px;
-            pointer-events: none;
-            z-index: 10;
-            opacity: 0;
-            animation: floatUpParticle 4s linear;
+            position: absolute; color: #4ade80; font-weight: bold; font-size: 10px;
+            pointer-events: none; z-index: 10; opacity: 0; animation: floatUpParticle 4s linear;
         }
 
         @keyframes floatUpParticle {
-            0% { opacity: 0; transform: translateY(0) scale(0.5); }
-            20% { opacity: 0.8; transform: translateY(-10px) scale(1); }
-            80% { opacity: 0.8; }
-            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+            0% { opacity: 0; transform: translateY(0) scale(0.5); } 20% { opacity: 0.8; transform: translateY(-10px) scale(1); } 80% { opacity: 0.8; } 100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
         }
-
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-30px); }
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(-8px); }
-        }
-
+        @keyframes floatUp { 0% { opacity: 1; transform: translateX(-50%) translateY(0); } 100% { opacity: 0; transform: translateX(-50%) translateY(-30px); } }
+        @keyframes bounce { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
 
-        .confetti-piece {
-            position: absolute; width: 10px; height: 10px; background: #ffd700; top: -10px;
-            animation: confetti 3s linear forwards;
+        .confetti-piece { position: absolute; width: 10px; height: 10px; background: #ffd700; top: -10px; animation: confetti 3s linear forwards; }
+        @keyframes confetti { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+        .scout-label {
+            background: rgba(0,0,0,0.85); border: 1px solid #eab308; color: #fbbf24;
+            padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; white-space: nowrap;
+            box-shadow: 0 2px 4px black;
         }
-        @keyframes confetti {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+
+        #fog-canvas {
+            position: absolute; top: 0; left: 0; pointer-events: none; z-index: 400;
         }
 
         ::-webkit-scrollbar { width: 6px; }
@@ -191,192 +112,54 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
+        const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
         // --- MATH HELPERS ---
-        const crossProduct = (o, a, b) => {
-            return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+        const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
+            const R = 6371e3; 
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
         };
-
-        const getConvexHull = (points) => {
-            if (points.length <= 2) return points;
-            const sorted = [...points].sort((a, b) => a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]);
-            const lower = [];
-            for (let point of sorted) {
-                while (lower.length >= 2 && crossProduct(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) lower.pop();
-                lower.push(point);
-            }
-            const upper = [];
-            for (let i = sorted.length - 1; i >= 0; i--) {
-                const point = sorted[i];
-                while (upper.length >= 2 && crossProduct(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) upper.pop();
-                upper.push(point);
-            }
-            upper.pop();
-            lower.pop();
-            return lower.concat(upper);
-        };
-
-        const isPointInPolygon = (point, vs) => {
-            const x = point[0], y = point[1];
-            let inside = false;
-            for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-                const xi = vs[i][0], yi = vs[i][1];
-                const xj = vs[j][0], yj = vs[j][1];
-                const intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-                if (intersect) inside = !inside;
-            }
-            return inside;
-        };
-
-        const getPolygonArea = (points) => {
-            let area = 0;
-            const n = points.length;
-            if (n < 3) return 0;
-            for (let i = 0; i < n; i++) {
-                const j = (i + 1) % n;
-                area += points[i][0] * points[j][1];
-                area -= points[j][0] * points[i][1];
-            }
-            return Math.abs(area) / 2.0;
-        };
-
-        // --- NEW ALGORITHM: FIND LARGEST VALID SUBSET HULL ---
-        const calculateValidTerritory = (ownedBars, unownedBars) => {
-            if (ownedBars.length < 3) return { points: ownedBars.map(b => [b.lat, b.lng]), valid: false, area: 0 };
-
-            let currentCandidateSet = [...ownedBars]; // We start with all owned bars
-            
-            // Loop until valid or too small
-            while (currentCandidateSet.length >= 3) {
-                const points = currentCandidateSet.map(b => [b.lat, b.lng]);
-                const hull = getConvexHull(points);
-                
-                // Check for intruders (unowned bars inside)
-                let intruders = 0;
-                for (let bar of unownedBars) {
-                    if (isPointInPolygon([bar.lat, bar.lng], hull)) {
-                        intruders++;
-                    }
-                }
-
-                if (intruders === 0) {
-                    // Valid!
-                    return { points: hull, valid: true, area: getPolygonArea(hull) };
-                }
-
-                // Invalid: We must remove a vertex from the hull to try and free the intruder.
-                // Heuristic: Try removing each vertex of the current hull and see which result yields the best score.
-                // Score = Minimize Intruders (Primary), Maximize Remaining Area (Secondary)
-                
-                // Identify which bars correspond to hull vertices
-                // Since 'hull' points are just coords, we match them back to bars
-                // Note: simple matching by lat/lng is sufficient here
-                
-                let bestSet = null;
-                let bestScore = { intruders: Infinity, area: -1 };
-
-                // Map hull points to actual bar objects in candidate set
-                const hullBars = currentCandidateSet.filter(b => 
-                    hull.some(h => Math.abs(h[0] - b.lat) < 0.000001 && Math.abs(h[1] - b.lng) < 0.000001)
-                );
-
-                // If for some reason filtering failed (precision), just try removing all from set (slower but safer)
-                const candidatesToRemove = hullBars.length > 0 ? hullBars : currentCandidateSet;
-
-                for (let barToRemove of candidatesToRemove) {
-                    const testSet = currentCandidateSet.filter(b => b.id !== barToRemove.id);
-                    if (testSet.length < 3) continue;
-
-                    const testPoints = testSet.map(b => [b.lat, b.lng]);
-                    const testHull = getConvexHull(testPoints);
-                    
-                    let testIntruders = 0;
-                    for (let bar of unownedBars) {
-                        if (isPointInPolygon([bar.lat, bar.lng], testHull)) testIntruders++;
-                    }
-                    const testArea = getPolygonArea(testHull);
-
-                    // Logic: We want FEWER intruders. If equal intruders, MORE area.
-                    if (testIntruders < bestScore.intruders || (testIntruders === bestScore.intruders && testArea > bestScore.area)) {
-                        bestScore = { intruders: testIntruders, area: testArea };
-                        bestSet = testSet;
-                    }
-                }
-
-                if (bestSet) {
-                    currentCandidateSet = bestSet;
-                } else {
-                    // Dead end
-                    break;
-                }
-            }
-            
-            // Fallback if no polygon found
-            return { points: [], valid: false, area: 0 };
-        };
-
 
         // --- DATA: BARS ---
         const INITIAL_BARS = [
-            // Neukölln
             { id: 1, district: "Neukölln", name: "Das Ö", lat: 52.4808, lng: 13.4261, baseCost: 100, baseIncome: 1, type: "Kneipe", description: "Urig. Tischkicker. Billiges Bier." },
             { id: 2, district: "Neukölln", name: "Flunker-Kranich", lat: 52.4825, lng: 13.4330, baseCost: 500, baseIncome: 4, type: "Rooftop", description: "Sonnenuntergang über den Arcaden." },
             { id: 21, district: "Neukölln", name: "Rixdorf Lounge", lat: 52.4730, lng: 13.4450, baseCost: 750, baseIncome: 6, type: "Lounge", description: "Versteckt im böhmischen Dorf." },
             { id: 22, district: "Neukölln", name: "Tempelhofer Feld", lat: 52.4720, lng: 13.4150, baseCost: 1500, baseIncome: 12, type: "OpenAir", description: "Bier auf der Landebahn." },
-
-            // Kreuzberg
             { id: 3, district: "Kreuzberg", name: "Club der Illusionäre", lat: 52.4965, lng: 13.4520, baseCost: 1200, baseIncome: 10, type: "Outdoor", description: "Tanzen am Flutgraben." },
             { id: 4, district: "Kreuzberg", name: "Pink Palace", lat: 52.4975, lng: 13.4185, baseCost: 2500, baseIncome: 25, type: "Kult", description: "Plüschig, pink und legendär." },
             { id: 8, district: "Kreuzberg", name: "Floodgate", lat: 52.5008, lng: 13.4445, baseCost: 45000, baseIncome: 350, type: "Club", description: "LED-Decke an der Spree." },
             { id: 11, district: "Kreuzberg", name: "Prince Charles", lat: 52.5036, lng: 13.4077, baseCost: 15000, baseIncome: 120, type: "Club", description: "Hip Hop und Burger im Pool." },
-            
-            // Friedrichshain
             { id: 9, district: "Friedrichshain", name: "Bergheim", lat: 52.5113, lng: 13.4433, baseCost: 100000, baseIncome: 800, type: "Legendär", description: "Die härteste Tür der Welt." },
             { id: 12, district: "Friedrichshain", name: "Tante Renate", lat: 52.4976, lng: 13.4658, baseCost: 30000, baseIncome: 210, type: "Club", description: "Ein Haus voller wirrer Partys." },
             { id: 13, district: "Friedrichshain", name: "The Grid", lat: 52.5028, lng: 13.4475, baseCost: 60000, baseIncome: 450, type: "Tourist", description: "Jeder Schulausflug endet hier." },
             { id: 14, district: "Friedrichshain", name: "Star Club", lat: 52.5085, lng: 13.4542, baseCost: 8000, baseIncome: 60, type: "Kultur", description: "Kino, Klettern, Punkrock." },
-
-            // Mitte
             { id: 6, district: "Mitte", name: "Der Safe", lat: 52.5106, lng: 13.4194, baseCost: 10000, baseIncome: 90, type: "Techno", description: "Der Urvater des Berliner Techno." },
             { id: 10, district: "Mitte", name: "KittyKat", lat: 52.5126, lng: 13.4165, baseCost: 250000, baseIncome: 1500, type: "Legendär", description: "Hier fallen alle Hüllen." },
             { id: 15, district: "Mitte", name: "King Kong Bar", lat: 52.5255, lng: 13.4124, baseCost: 3500, baseIncome: 30, type: "Bar", description: "Schick in der Brunnenstraße." },
             { id: 16, district: "Mitte", name: "Permament Vacation", lat: 52.5220, lng: 13.3880, baseCost: 7000, baseIncome: 55, type: "Politik", description: "Wo Politiker Kölsch trinken." },
             { id: 23, district: "Mitte", name: "TV Tower Bar", lat: 52.5208, lng: 13.4094, baseCost: 20000, baseIncome: 180, type: "View", description: "Ganz oben in der Kugel." },
-
-            // Prenzlauer Berg
             { id: 7, district: "Prenzlauer Berg", name: "Panke Garten", lat: 52.5404, lng: 13.4107, baseCost: 20000, baseIncome: 180, type: "Biergarten", description: "Berlins ältester Biergarten." },
             { id: 17, district: "Prenzlauer Berg", name: "Culture Brewery", lat: 52.5390, lng: 13.4132, baseCost: 25000, baseIncome: 190, type: "Areal", description: "Riesiges Areal, viele Clubs." },
             { id: 24, district: "Prenzlauer Berg", name: "Mauerpark Karaoke", lat: 52.5440, lng: 13.4030, baseCost: 2500, baseIncome: 20, type: "OpenAir", description: "Sonntags singen vor tausenden." },
             { id: 25, district: "Prenzlauer Berg", name: "Wasserturm", lat: 52.5330, lng: 13.4200, baseCost: 8000, baseIncome: 65, type: "Kiez", description: "Rund um den Turm." },
-
-            // Charlottenburg / West
             { id: 5, district: "Charlottenburg", name: "Ape Lounge", lat: 52.5053, lng: 13.3364, baseCost: 5000, baseIncome: 45, type: "Chic", description: "Teure Drinks, Blick auf Affen." },
             { id: 18, district: "Charlottenburg", name: "Dunkles Café", lat: 52.5065, lng: 13.3200, baseCost: 4000, baseIncome: 35, type: "24h", description: "Hat eigentlich immer offen." },
             { id: 26, district: "Charlottenburg", name: "Schlossgarten", lat: 52.5200, lng: 13.2950, baseCost: 12000, baseIncome: 95, type: "Royal", description: "Feiern wie ein König." },
             { id: 27, district: "Charlottenburg", name: "Ku'damm Beach", lat: 52.4980, lng: 13.2800, baseCost: 30000, baseIncome: 220, type: "Luxus", description: "Champagner am Halensee." },
-
-            // Lichtenberg
             { id: 19, district: "Lichtenberg", name: "Sisyphus Hill", lat: 52.4930, lng: 13.4910, baseCost: 80000, baseIncome: 650, type: "OpenAir", description: "Feiern von Freitag bis Montag." },
             { id: 28, district: "Lichtenberg", name: "Dong Xuan Center", lat: 52.5350, lng: 13.4850, baseCost: 5000, baseIncome: 40, type: "Markt", description: "Geheimtipps in Halle 8." },
             { id: 29, district: "Lichtenberg", name: "Rummels Bucht", lat: 52.4970, lng: 13.4800, baseCost: 18000, baseIncome: 130, type: "Piraten", description: "Versteckt am Ufer." },
-
-            // Treptow
             { id: 20, district: "Treptow", name: "Molecule Man", lat: 52.4967, lng: 13.4593, baseCost: 500000, baseIncome: 2500, type: "Landmark", description: "Party auf dem Wasser." },
             { id: 30, district: "Treptow", name: "Island of Youth", lat: 52.4850, lng: 13.4750, baseCost: 10000, baseIncome: 85, type: "Insel", description: "Abhängen auf der Brücke." },
             { id: 31, district: "Treptow", name: "Arena Badeschiff", lat: 52.5000, lng: 13.4530, baseCost: 60000, baseIncome: 420, type: "Sommer", description: "Pool in der Spree." }
         ];
-
-        const DISTRICT_POLYGONS = {
-            "Neukölln": [[52.495, 13.419], [52.485, 13.450], [52.470, 13.460], [52.440, 13.460], [52.420, 13.440], [52.440, 13.410], [52.470, 13.420]],
-            "Kreuzberg": [[52.505, 13.375], [52.508, 13.400], [52.500, 13.450], [52.495, 13.450], [52.490, 13.420], [52.485, 13.380], [52.495, 13.370]],
-            "Friedrichshain": [[52.525, 13.435], [52.525, 13.465], [52.510, 13.480], [52.500, 13.475], [52.495, 13.455], [52.500, 13.435], [52.515, 13.425]],
-            "Mitte": [[52.535, 13.365], [52.535, 13.410], [52.525, 13.425], [52.510, 13.425], [52.505, 13.400], [52.505, 13.365], [52.520, 13.350]],
-            "Prenzlauer Berg": [[52.555, 13.390], [52.560, 13.435], [52.550, 13.460], [52.525, 13.460], [52.525, 13.420], [52.530, 13.400]],
-            "Charlottenburg": [[52.525, 13.260], [52.525, 13.330], [52.515, 13.350], [52.500, 13.350], [52.495, 13.300], [52.495, 13.250]],
-            "Lichtenberg": [[52.540, 13.475], [52.540, 13.520], [52.500, 13.530], [52.480, 13.520], [52.480, 13.480], [52.500, 13.470]],
-            "Treptow": [[52.495, 13.455], [52.495, 13.500], [52.460, 13.520], [52.440, 13.500], [52.460, 13.450]]
-        };
 
         const BASE_ACHIEVEMENTS = [
             { id: 'first_buck', name: 'Erster Euro', description: 'Besitze 1€', condition: (state) => state.money >= 1, reward: 0 },
@@ -388,22 +171,8 @@
             { id: 'click_1000', name: 'Lichtgeschwindigkeit', description: 'Klicke 1000 mal', condition: (state) => state.totalClicks >= 1000, reward: 1.3 },
         ];
 
-        const DISTRICT_ACHIEVEMENTS = Object.keys(DISTRICT_POLYGONS).map(districtName => ({
-            id: `king_${districtName.toLowerCase().replace(/\s/g, '_')}`,
-            name: `King of ${districtName}`,
-            description: `Besitze alle Bars in ${districtName}`,
-            districtTarget: districtName,
-            condition: (state, bars) => {
-                const districtBars = INITIAL_BARS.filter(b => b.district === districtName);
-                if (districtBars.length === 0) return false;
-                return districtBars.every(b => bars[b.id] && bars[b.id].owned);
-            },
-            reward: 1.25 
-        }));
+        const ALL_ACHIEVEMENTS = [...BASE_ACHIEVEMENTS];
 
-        const ALL_ACHIEVEMENTS = [...BASE_ACHIEVEMENTS, ...DISTRICT_ACHIEVEMENTS];
-
-        // Helpers
         const formatMoney = (amount) => {
             if (amount >= 1000000) return (amount / 1000000).toFixed(2).replace('.', ',') + ' Mio. €';
             if (amount >= 1000) return (amount / 1000).toFixed(1).replace('.', ',') + 'k €';
@@ -416,22 +185,25 @@
              return Math.floor(amount);
         }
 
+        const formatDistance = (meters) => {
+            if (meters >= 1000) return (meters / 1000).toFixed(1) + ' km';
+            return Math.round(meters) + ' m';
+        };
+
         const App = () => {
             const [gameState, setGameState] = useState(() => {
-                const saved = localStorage.getItem('berlinBarTycoon_v7');
+                const saved = localStorage.getItem('berlinBarTycoon_v13'); 
                 const defaultState = {
-                    money: 0,
-                    clickLevel: 1,
-                    totalClicks: 0,
-                    unlockedAchievements: [],
-                    bars: {},
-                    hasSeenWin: false
+                    money: 0, clickLevel: 1, totalClicks: 0, unlockedAchievements: [], bars: {}, hasSeenWin: false
                 };
-                INITIAL_BARS.forEach(bar => { defaultState.bars[bar.id] = { level: 0, owned: false }; });
-
+                INITIAL_BARS.forEach(bar => { defaultState.bars[bar.id] = { level: 0, owned: false, rangeLevel: 1 }; });
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    const mergedBars = { ...defaultState.bars, ...(parsed.bars || {}) };
+                    const mergedBars = { ...defaultState.bars };
+                    Object.keys(parsed.bars).forEach(id => {
+                        mergedBars[id] = { ...defaultState.bars[id], ...parsed.bars[id] };
+                        if (!mergedBars[id].rangeLevel) mergedBars[id].rangeLevel = 1;
+                    });
                     return { ...defaultState, ...parsed, bars: mergedBars };
                 }
                 return defaultState;
@@ -446,10 +218,14 @@
             const [showWinModal, setShowWinModal] = useState(false);
             const [notification, setNotification] = useState(null);
             
+            // MOVED UP: Definitions that were causing ReferenceError
+            const selectedBar = selectedBarId ? INITIAL_BARS.find(b => b.id === selectedBarId) : null;
+            const selectedBarState = selectedBarId ? gameState.bars[selectedBarId] : null;
+
             const mapRef = useRef(null);
             const markersRef = useRef({});
-            const polygonsRef = useRef({});
-            const territoryLayerRef = useRef(null);
+            const scoutLinesRef = useRef([]);
+            const canvasRef = useRef(null); 
 
             // --- CALCULATIONS ---
             const getGlobalMultiplier = () => {
@@ -458,11 +234,10 @@
                     const ach = ALL_ACHIEVEMENTS.find(a => a.id === achId);
                     if (ach && ach.reward > 0) multiplier *= ach.reward;
                 });
-                multiplier *= territoryState.bonus;
                 return multiplier;
             };
 
-            const globalMult = useMemo(() => getGlobalMultiplier(), [gameState.unlockedAchievements, territoryState.bonus]);
+            const globalMult = useMemo(() => getGlobalMultiplier(), [gameState.unlockedAchievements]);
 
             const getIncome = (barId) => {
                 const bar = INITIAL_BARS.find(b => b.id === barId);
@@ -483,52 +258,136 @@
                 return Math.floor(bar.baseCost * Math.pow(1.5, state.level));
             };
 
+            const getRangeRadius = (barId) => {
+                const state = gameState.bars[barId];
+                if (!state.owned && barId !== 1) return 0;
+                if (barId === 1 && !state.owned) return 600; 
+                return 500 + ((state.rangeLevel - 1) * 200);
+            };
+
+            const getRangeUpgradeCost = (barId) => {
+                const state = gameState.bars[barId];
+                return Math.floor(1000 * Math.pow(1.8, state.rangeLevel - 1));
+            };
+
             const getClickIncome = () => {
                 const base = (10 * Math.pow(1.8, gameState.clickLevel - 1)) + (getTotalIncome() * 0.05);
-                return base * globalMult * 4; // Double of previous double (x4 total now to satisfy "Verdopple den klick bonus")
+                return base * globalMult * 4; 
             };
 
             const getClickUpgradeCost = () => {
                 return Math.floor(500 * Math.pow(2.5, gameState.clickLevel - 1));
             };
 
+            const isBarVisible = (targetBar) => {
+                const targetLat = targetBar.lat;
+                const targetLng = targetBar.lng;
+                if (gameState.bars[targetBar.id].owned) return true;
+                if (targetBar.id === 1) return true;
+
+                for (const sourceBar of INITIAL_BARS) {
+                    const radius = getRangeRadius(sourceBar.id);
+                    if (radius > 0) {
+                        const dist = getDistanceMeters(sourceBar.lat, sourceBar.lng, targetLat, targetLng);
+                        if (dist <= radius) return true;
+                    }
+                }
+                return false;
+            };
+
             const canAffordAnyUpgrade = useMemo(() => {
-                return INITIAL_BARS.some(bar => gameState.money >= getUpgradeCost(bar.id));
+                return INITIAL_BARS.some(bar => isBarVisible(bar) && (gameState.money >= getUpgradeCost(bar.id) || gameState.money >= getRangeUpgradeCost(bar.id)));
             }, [gameState.money, gameState.bars]);
 
-            // --- LOOPS & EFFECTS ---
-            
-            // Territory Logic - Largest Valid Hull
-            useEffect(() => {
-                const allOwnedBars = INITIAL_BARS.filter(b => gameState.bars[b.id]?.owned);
-                const unownedBars = INITIAL_BARS.filter(b => !gameState.bars[b.id]?.owned);
+            // --- CANVAS FOG DRAWING ---
+            const drawFog = useCallback(() => {
+                if (!mapRef.current || !canvasRef.current) return;
                 
-                const result = calculateValidTerritory(allOwnedBars, unownedBars);
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const map = mapRef.current;
+                const size = map.getSize();
                 
-                if (result.valid) {
-                    const bonusFactor = 1 + (result.area * 200); 
-                    setTerritoryState({
-                        points: result.points,
-                        bonus: Math.max(1, bonusFactor)
-                    });
-                } else if (allOwnedBars.length === 2) {
-                    // Fallback line for 2 points (no area bonus)
-                    setTerritoryState({ points: allOwnedBars.map(b => [b.lat, b.lng]), bonus: 1.0 });
+                if (canvas.width !== size.x || canvas.height !== size.y) {
+                    canvas.width = size.x;
+                    canvas.height = size.y;
                 }
-            }, [gameState.bars]);
+                
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Game Loop
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.fillStyle = '#ffffff';
+
+                INITIAL_BARS.forEach(bar => {
+                    const radiusMeters = getRangeRadius(bar.id);
+                    if (radiusMeters > 0) {
+                        const center = map.latLngToContainerPoint([bar.lat, bar.lng]);
+                        // Fix for radius stability: calc based on latitude
+                        const latRad = bar.lat * Math.PI / 180;
+                        const metersPerPixel = 156543.03392 * Math.cos(latRad) / Math.pow(2, map.getZoom());
+                        const radiusPx = radiusMeters / metersPerPixel;
+
+                        ctx.beginPath();
+                        ctx.arc(center.x, center.y, radiusPx, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }, [gameState.bars]); 
+
+            // --- INITIALIZATION ---
+            useEffect(() => {
+                if (!mapRef.current) {
+                    // Init Map ONLY ONCE
+                    mapRef.current = L.map('map', { zoomControl: false, attributionControl: false }).setView([52.4808, 13.4261], 14);
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors',
+                        maxZoom: 19
+                    }).addTo(mapRef.current);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.id = 'fog-canvas';
+                    mapRef.current.getContainer().appendChild(canvas);
+                    canvasRef.current = canvas;
+                }
+
+                const map = mapRef.current;
+
+                // Re-bind events to current drawFog closure
+                map.off('move', drawFog);
+                map.off('zoom', drawFog);
+                map.off('resize', drawFog);
+                map.off('viewreset', drawFog);
+
+                map.on('move', drawFog);
+                map.on('zoom', drawFog);
+                map.on('resize', drawFog);
+                map.on('viewreset', drawFog);
+
+                // Force draw
+                drawFog();
+
+                return () => {
+                    map.off('move', drawFog);
+                    map.off('zoom', drawFog);
+                    map.off('resize', drawFog);
+                    map.off('viewreset', drawFog);
+                };
+            }, [drawFog]); // Only re-run if drawFog changes (which depends on bars state)
+
+            // --- LOOPS & OTHER EFFECTS ---
             useEffect(() => {
                 const interval = setInterval(() => {
                     const income = getTotalIncome();
                     if (income > 0) setGameState(prev => ({ ...prev, money: prev.money + income }));
                 }, 1000);
                 return () => clearInterval(interval);
-            }, [gameState.bars, gameState.unlockedAchievements, territoryState.bonus]);
+            }, [gameState.bars, gameState.unlockedAchievements]);
 
-            // Save
             useEffect(() => {
-                localStorage.setItem('berlinBarTycoon_v7', JSON.stringify(gameState));
+                localStorage.setItem('berlinBarTycoon_v13', JSON.stringify(gameState));
             }, [gameState]);
 
             useEffect(() => {
@@ -548,7 +407,6 @@
                         }
                     }
                 });
-
                 if (newUnlocks.length > 0) {
                     setGameState(prev => ({
                         ...prev,
@@ -562,17 +420,130 @@
                 }
             }, [gameState.money, gameState.bars, gameState.clickLevel, gameState.totalClicks]);
 
-            // Particles
+            // Markers & Lines Update
             useEffect(() => {
-                 const particleInterval = setInterval(() => {
-                    const ownedBars = INITIAL_BARS.filter(b => gameState.bars[b.id]?.owned);
-                    if (ownedBars.length > 0) {
-                        const randomBar = ownedBars[Math.floor(Math.random() * ownedBars.length)];
-                        showMoneyParticle(randomBar.id);
+                if(!mapRef.current) return;
+                const map = mapRef.current;
+
+                // --- SCOUT ARROWS ---
+                scoutLinesRef.current.forEach(l => {
+                    if(l.line) l.line.remove();
+                    if(l.tip) l.tip.remove();
+                });
+                scoutLinesRef.current = [];
+
+                const visibleBarIds = new Set(INITIAL_BARS.filter(b => isBarVisible(b)).map(b => b.id));
+                const hiddenBars = INITIAL_BARS.filter(b => !visibleBarIds.has(b.id));
+
+                if (hiddenBars.length > 0) {
+                    INITIAL_BARS.forEach(sourceBar => {
+                        if (gameState.bars[sourceBar.id].owned) {
+                            let nearest = null;
+                            let minDistance = Infinity;
+
+                            hiddenBars.forEach(target => {
+                                const d = getDistanceMeters(sourceBar.lat, sourceBar.lng, target.lat, target.lng);
+                                if (d < minDistance) {
+                                    minDistance = d;
+                                    nearest = target;
+                                }
+                            });
+
+                            if (nearest) {
+                                const line = L.polyline([[sourceBar.lat, sourceBar.lng], [nearest.lat, nearest.lng]], {
+                                    color: '#eab308', // Yellow
+                                    dashArray: '8, 8',
+                                    weight: 4, // Thicker
+                                    opacity: 0.9,
+                                    className: 'animate-pulse'
+                                }).addTo(map);
+                                
+                                // Label closer to source
+                                const lat = sourceBar.lat + (nearest.lat - sourceBar.lat) * 0.15; // Closer to start (15%)
+                                const lng = sourceBar.lng + (nearest.lng - sourceBar.lng) * 0.15;
+
+                                const tooltip = L.tooltip({
+                                    permanent: true, direction: 'center', className: 'scout-label', offset: [0, 0]
+                                })
+                                .setLatLng([lat, lng])
+                                .setContent(`➡ ${formatDistance(minDistance)}`)
+                                .addTo(map);
+                                
+                                scoutLinesRef.current.push({line, tip: tooltip});
+                            }
+                        }
+                    });
+                }
+
+                // --- MARKERS ---
+                INITIAL_BARS.forEach(bar => {
+                    const isVisible = isBarVisible(bar);
+                    const state = gameState.bars[bar.id] || { owned: false };
+                    
+                    if (!isVisible) {
+                        if (markersRef.current[bar.id]) {
+                            markersRef.current[bar.id].remove();
+                            delete markersRef.current[bar.id];
+                        }
+                        return;
                     }
-                }, 2000);
-                return () => clearInterval(particleInterval);
-            }, [gameState.bars]);
+
+                    const cost = getUpgradeCost(bar.id);
+                    const isAffordable = gameState.money >= cost;
+                    const income = getIncome(bar.id);
+                    
+                    let markerClass = 'bar-marker';
+                    if (state.owned) markerClass += ' marker-owned';
+                    else if (isAffordable) markerClass += ' marker-affordable-base';
+                    else markerClass += ' marker-locked';
+
+                    let levelBadgeHtml = '';
+                    if (state.owned && state.level > 0) {
+                        let badgeClass = 'level-badge';
+                        if (state.level >= 25) badgeClass += ' level-tier-3';
+                        else if (state.level >= 10) badgeClass += ' level-tier-2';
+                        else if (state.level >= 5) badgeClass += ' level-tier-1';
+                        levelBadgeHtml = `<div class="${badgeClass}">${state.level}</div>`;
+                    }
+
+                    // Define global trigger if needed, or handle differently. 
+                    // Using window for simplicity in leaflet html
+                    window[`triggerUpgrade_${bar.id}`] = (e) => {
+                        if(e) e.stopPropagation();
+                        purchaseOrUpgradeBar(bar.id, true);
+                    };
+
+                    const arrowHtml = isAffordable 
+                        ? `<div class="upgrade-arrow" onclick="window.triggerUpgrade_${bar.id}(event)" title="Direkt kaufen/upgraden">⬆️</div>` : '';
+
+                    const iconHtml = `
+                        <div class="bar-marker-container">
+                            ${arrowHtml}
+                            <div class="${markerClass}">${state.owned ? '🍻' : '🔒'}</div>
+                            ${levelBadgeHtml}
+                            ${state.owned && income > 0 ? `<div class="income-badge">${formatShortMoney(income)}/s</div>` : ''}
+                        </div>
+                    `;
+
+                    const customIcon = L.divIcon({ className: 'custom-leaflet-icon', html: iconHtml, iconSize: [30, 30], iconAnchor: [15, 15] });
+
+                    if (!markersRef.current[bar.id]) {
+                        const marker = L.marker([bar.lat, bar.lng], { icon: customIcon })
+                            .addTo(map)
+                            .on('click', () => {
+                                setSelectedBarId(bar.id);
+                                map.setView([bar.lat + 0.002, bar.lng], 15);
+                                setIsListOpen(false);
+                            });
+                        markersRef.current[bar.id] = marker;
+                    } else {
+                        markersRef.current[bar.id].setIcon(customIcon);
+                        if (isAffordable) markersRef.current[bar.id].setZIndexOffset(1000);
+                        else markersRef.current[bar.id].setZIndexOffset(0);
+                    }
+                });
+
+            }, [gameState.bars, gameState.money]); 
 
 
             // --- ACTIONS ---
@@ -587,11 +558,6 @@
             const upgradeClicker = () => {
                 const cost = getClickUpgradeCost();
                 if (gameState.money >= cost) setGameState(prev => ({ ...prev, money: prev.money - cost, clickLevel: prev.clickLevel + 1 }));
-            };
-
-            window.triggerUpgrade = (barId, event) => {
-                if(event) event.stopPropagation();
-                purchaseOrUpgradeBar(barId, true);
             };
 
             const purchaseOrUpgradeBar = (barId, fromMap = false) => {
@@ -620,25 +586,64 @@
                 });
             };
 
+            const upgradeRange = (barId) => {
+                const cost = getRangeUpgradeCost(barId);
+                if (gameState.money >= cost) {
+                    setGameState(prev => {
+                        const newState = { ...prev, money: prev.money - cost, bars: { ...prev.bars } };
+                        newState.bars[barId] = { 
+                            ...prev.bars[barId],
+                            rangeLevel: (prev.bars[barId].rangeLevel || 1) + 1
+                        };
+                        return newState;
+                    });
+                }
+            };
+
             const upgradeAll = () => {
                 setGameState(prev => {
                     let currentMoney = prev.money;
                     const newBars = { ...prev.bars };
                     let changed = false;
                     
+                    // 1. Upgrade Income (Prioritize Owned)
                     INITIAL_BARS.forEach(bar => {
+                        if (!isBarVisible(bar)) return;
                         const state = newBars[bar.id];
-                        const cost = !state.owned ? bar.baseCost : Math.floor(bar.baseCost * Math.pow(1.5, state.level));
+                        // Prioritize income upgrades for owned bars first
+                        if(state.owned) {
+                             const cost = Math.floor(bar.baseCost * Math.pow(1.5, state.level));
+                             if (currentMoney >= cost) {
+                                currentMoney -= cost;
+                                newBars[bar.id] = { ...state, level: state.level + 1 };
+                                changed = true;
+                             }
+                        }
+                    });
+                    
+                    // 2. Buy New Bars (if money left)
+                    INITIAL_BARS.forEach(bar => {
+                        if (!isBarVisible(bar)) return;
+                        const state = newBars[bar.id];
+                        if(!state.owned) {
+                             const cost = bar.baseCost;
+                             if (currentMoney >= cost) {
+                                currentMoney -= cost;
+                                newBars[bar.id] = { ...state, owned: true, level: 1 };
+                                changed = true;
+                             }
+                        }
+                    });
+
+                    // 3. Upgrade Visibility (if money left)
+                    INITIAL_BARS.forEach(bar => {
+                        if (!newBars[bar.id].owned) return;
+                        // Use updated state for cost calc if it changed in step 1, but range level didn't change yet
+                        const rangeCost = Math.floor(1000 * Math.pow(1.8, newBars[bar.id].rangeLevel - 1));
                         
-                        if (currentMoney >= cost) {
-                            currentMoney -= cost;
-                            newBars[bar.id] = { ...state };
-                            if (!state.owned) {
-                                newBars[bar.id].owned = true;
-                                newBars[bar.id].level = 1;
-                            } else {
-                                newBars[bar.id].level += 1;
-                            }
+                        if (currentMoney >= rangeCost) {
+                            currentMoney -= rangeCost;
+                            newBars[bar.id].rangeLevel += 1;
                             changed = true;
                         }
                     });
@@ -680,114 +685,21 @@
                 setTimeout(() => el.remove(), 4000);
             };
 
-            // --- MAP DRAWING ---
-            useEffect(() => {
-                if (!mapRef.current) {
-                    mapRef.current = L.map('map', { zoomControl: false, attributionControl: false }).setView([52.51, 13.40], 12);
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                        attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
-                    }).addTo(mapRef.current);
-                }
-
-                // 1. Background Districts
-                Object.keys(DISTRICT_POLYGONS).forEach(districtName => {
-                    const coords = DISTRICT_POLYGONS[districtName];
-                    const barsInDistrict = INITIAL_BARS.filter(b => b.district === districtName);
-                    const isComplete = barsInDistrict.length > 0 && barsInDistrict.every(b => gameState.bars[b.id]?.owned);
-                    const style = isComplete ? { color: '#ffd700', weight: 2, opacity: 0.8, fillColor: '#ffd700', fillOpacity: 0.2 } 
-                                             : { color: '#4b5563', weight: 1, opacity: 0.5, fillColor: '#000000', fillOpacity: 0.0 };
-
-                    if (!polygonsRef.current[districtName]) {
-                        const polygon = L.polygon(coords, style).addTo(mapRef.current);
-                        polygon.bringToBack();
-                        polygonsRef.current[districtName] = polygon;
-                    } else {
-                        polygonsRef.current[districtName].setStyle(style);
-                    }
-                });
-                
-                // 2. Territory Hull (Safe Subset)
-                if (territoryLayerRef.current) territoryLayerRef.current.remove();
-                
-                if (territoryState.points.length >= 3) {
-                    territoryLayerRef.current = L.polygon(territoryState.points, {
-                        color: '#22c55e', weight: 3, opacity: 0.8,
-                        fillOpacity: 0.15, fillColor: '#22c55e',
-                        dashArray: null, lineJoin: 'round'
-                    }).addTo(mapRef.current);
-                } else if (territoryState.points.length === 2) {
-                    territoryLayerRef.current = L.polyline(territoryState.points, {
-                        color: '#22c55e', weight: 2, opacity: 0.8, dashArray: '5, 10'
-                    }).addTo(mapRef.current);
-                }
-
-                // 3. Markers
-                INITIAL_BARS.forEach(bar => {
-                    const state = gameState.bars[bar.id] || { owned: false };
-                    const cost = getUpgradeCost(bar.id);
-                    const isAffordable = gameState.money >= cost;
-                    const income = getIncome(bar.id);
-                    
-                    let markerClass = 'bar-marker';
-                    if (state.owned) markerClass += ' marker-owned';
-                    else if (isAffordable) markerClass += ' marker-affordable-base';
-                    else markerClass += ' marker-locked';
-
-                    let levelBadgeHtml = '';
-                    if (state.owned && state.level > 0) {
-                        let badgeClass = 'level-badge';
-                        if (state.level >= 25) badgeClass += ' level-tier-3';
-                        else if (state.level >= 10) badgeClass += ' level-tier-2';
-                        else if (state.level >= 5) badgeClass += ' level-tier-1';
-                        levelBadgeHtml = `<div class="${badgeClass}">${state.level}</div>`;
-                    }
-
-                    const arrowHtml = isAffordable 
-                        ? `<div class="upgrade-arrow" onclick="window.triggerUpgrade(${bar.id}, event)" title="Direkt kaufen/upgraden">⬆️</div>` : '';
-
-                    const iconHtml = `
-                        <div class="bar-marker-container">
-                            ${arrowHtml}
-                            <div class="${markerClass}">${state.owned ? '🍻' : '🔒'}</div>
-                            ${levelBadgeHtml}
-                            ${state.owned && income > 0 ? `<div class="income-badge">${formatShortMoney(income)}/s</div>` : ''}
-                        </div>
-                    `;
-
-                    const customIcon = L.divIcon({ className: 'custom-leaflet-icon', html: iconHtml, iconSize: [30, 30], iconAnchor: [15, 15] });
-
-                    if (!markersRef.current[bar.id]) {
-                        const marker = L.marker([bar.lat, bar.lng], { icon: customIcon })
-                            .addTo(mapRef.current)
-                            .on('click', () => {
-                                setSelectedBarId(bar.id);
-                                mapRef.current.setView([bar.lat + 0.005, bar.lng], 14);
-                                setIsListOpen(false);
-                            });
-                        markersRef.current[bar.id] = marker;
-                    } else {
-                        markersRef.current[bar.id].setIcon(customIcon);
-                        if (isAffordable) markersRef.current[bar.id].setZIndexOffset(1000);
-                        else markersRef.current[bar.id].setZIndexOffset(0);
-                    }
-                });
-            }, [gameState.bars, gameState.money, territoryState]);
-
+            // ADDED: barsByDistrict definition that was missing
             const barsByDistrict = useMemo(() => {
                 const groups = {};
                 INITIAL_BARS.forEach(bar => {
-                    if (!groups[bar.district]) groups[bar.district] = [];
-                    groups[bar.district].push(bar);
+                    if (isBarVisible(bar)) {
+                        if (!groups[bar.district]) groups[bar.district] = [];
+                        groups[bar.district].push(bar);
+                    }
                 });
                 return groups;
-            }, []);
-
-            const selectedBar = selectedBarId ? INITIAL_BARS.find(b => b.id === selectedBarId) : null;
-            const selectedBarState = selectedBarId ? gameState.bars[selectedBarId] : null;
+            }, [gameState.bars]); // Depend on bars state because isBarVisible depends on it (indirectly via owned status/ranges)
 
             return (
                 <div className="relative h-screen w-screen font-sans text-white select-none">
-                    <div id="map" className="absolute top-0 left-0 w-full h-full"></div>
+                    <div id="map" className="absolute top-0 left-0 w-full h-full bg-black"></div>
 
                     {showWinModal && (
                         <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowWinModal(false)}>
@@ -827,7 +739,6 @@
                                 </div>
                                 <div className="flex flex-col gap-0.5 mt-1">
                                     {globalMult > 1 && <div className="text-xs text-yellow-500 font-bold">Multiplikator: x{globalMult.toFixed(2)}</div>}
-                                    {territoryState.bonus > 1 && <div className="text-[10px] text-green-400">davon Fläche: x{territoryState.bonus.toFixed(2)}</div>}
                                 </div>
                             </div>
                             
@@ -928,6 +839,25 @@
                                     <span>{selectedBarState.owned ? "Ausbauen" : "Kaufen"}</span>
                                     <span>{formatMoney(getUpgradeCost(selectedBar.id))}</span>
                                 </button>
+                                
+                                {selectedBarState.owned && (
+                                    <button 
+                                        onClick={() => upgradeRange(selectedBar.id)} 
+                                        disabled={gameState.money < getRangeUpgradeCost(selectedBar.id)}
+                                        className={`w-full mt-3 py-3 rounded-lg font-bold text-sm transition-all flex justify-between px-6 items-center
+                                            ${gameState.money >= getRangeUpgradeCost(selectedBar.id) 
+                                                ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg' 
+                                                : 'bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700'}
+                                        `}
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span>🔭 Sichtweite +</span>
+                                            <span className="text-[10px] font-normal opacity-70">Aktuell: {formatDistance(getRangeRadius(selectedBar.id))}</span>
+                                        </div>
+                                        <span>{formatMoney(getRangeUpgradeCost(selectedBar.id))}</span>
+                                    </button>
+                                )}
+
                                 <div className="mt-2 text-center text-xs text-gray-500">Nächster x2 Boost bei Level {Math.ceil((selectedBarState.level + 1) / 5) * 5}</div>
                             </div>
                         </div>
@@ -936,7 +866,7 @@
                     <div className={`absolute top-24 left-4 z-20 transition-all duration-300 ${isListOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none'}`}>
                         <div className="bg-gray-900/90 backdrop-blur border border-gray-700 rounded-xl overflow-hidden shadow-xl w-72 max-h-[70vh] flex flex-col pointer-events-auto">
                             <div className="p-3 border-b border-gray-700 bg-gray-800/50 font-bold text-sm text-gray-300 flex justify-between items-center">
-                                <span>Alle Locations</span>
+                                <span>Entdeckte Locations</span>
                                 <button onClick={() => setIsListOpen(false)} className="text-gray-400 hover:text-white">✕</button>
                             </div>
                             <div className="overflow-y-auto flex-1 p-2 space-y-4">
