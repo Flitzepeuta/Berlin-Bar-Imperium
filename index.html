@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berlin Bar Tycoon - Fixed</title>
+    <title>Berlin Bar Tycoon - Precision Fog</title>
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -51,6 +51,12 @@
             position: absolute; bottom: -18px; background-color: rgba(0, 0, 0, 0.8);
             color: #4ade80; font-size: 10px; padding: 1px 4px; border-radius: 4px;
             white-space: nowrap; font-weight: bold; border: 1px solid #22c55e; z-index: 20; pointer-events: none;
+        }
+
+        .cost-badge {
+            position: absolute; bottom: -18px; background-color: rgba(220, 38, 38, 0.9);
+            color: white; font-size: 10px; padding: 1px 4px; border-radius: 4px;
+            white-space: nowrap; font-weight: bold; border: 1px solid #ef4444; z-index: 20; pointer-events: none;
         }
 
         .level-badge {
@@ -126,39 +132,75 @@
             return R * c;
         };
 
-        // --- DATA: BARS ---
+        // Hexagon Logic (Pointy Top)
+        const HEX_SIZE_METERS = 250; 
+        
+        const axialToMeters = (q, r) => {
+            const x = HEX_SIZE_METERS * (Math.sqrt(3) * q + Math.sqrt(3)/2 * r);
+            const y = HEX_SIZE_METERS * (3./2 * r);
+            return { x, y };
+        };
+
+        const metersToAxial = (x, y) => {
+            const q = (Math.sqrt(3)/3 * x - 1./3 * y) / HEX_SIZE_METERS;
+            const r = (2./3 * y) / HEX_SIZE_METERS;
+            return hexRound(q, r);
+        };
+
+        const hexRound = (q, r) => {
+            let s = -q - r;
+            let rq = Math.round(q);
+            let rr = Math.round(r);
+            let rs = Math.round(s);
+            const q_diff = Math.abs(rq - q);
+            const r_diff = Math.abs(rr - r);
+            const s_diff = Math.abs(rs - s);
+            if (q_diff > r_diff && q_diff > s_diff) rq = -rr - rs;
+            else if (r_diff > s_diff) rr = -rq - rs;
+            return { q: rq, r: rr };
+        };
+
+        // --- DATA: BARS (40 Total) ---
         const INITIAL_BARS = [
             { id: 1, district: "Neukölln", name: "Das Ö", lat: 52.4808, lng: 13.4261, baseCost: 100, baseIncome: 1, type: "Kneipe", description: "Urig. Tischkicker. Billiges Bier." },
             { id: 2, district: "Neukölln", name: "Flunker-Kranich", lat: 52.4825, lng: 13.4330, baseCost: 500, baseIncome: 4, type: "Rooftop", description: "Sonnenuntergang über den Arcaden." },
             { id: 21, district: "Neukölln", name: "Rixdorf Lounge", lat: 52.4730, lng: 13.4450, baseCost: 750, baseIncome: 6, type: "Lounge", description: "Versteckt im böhmischen Dorf." },
             { id: 22, district: "Neukölln", name: "Tempelhofer Feld", lat: 52.4720, lng: 13.4150, baseCost: 1500, baseIncome: 12, type: "OpenAir", description: "Bier auf der Landebahn." },
+            { id: 32, district: "Neukölln", name: "Schiller-Oase", lat: 52.4750, lng: 13.4200, baseCost: 2200, baseIncome: 18, type: "Bar", description: "Entspannt im Schillerkiez." },
             { id: 3, district: "Kreuzberg", name: "Club der Illusionäre", lat: 52.4965, lng: 13.4520, baseCost: 1200, baseIncome: 10, type: "Outdoor", description: "Tanzen am Flutgraben." },
             { id: 4, district: "Kreuzberg", name: "Pink Palace", lat: 52.4975, lng: 13.4185, baseCost: 2500, baseIncome: 25, type: "Kult", description: "Plüschig, pink und legendär." },
             { id: 8, district: "Kreuzberg", name: "Floodgate", lat: 52.5008, lng: 13.4445, baseCost: 45000, baseIncome: 350, type: "Club", description: "LED-Decke an der Spree." },
             { id: 11, district: "Kreuzberg", name: "Prince Charles", lat: 52.5036, lng: 13.4077, baseCost: 15000, baseIncome: 120, type: "Club", description: "Hip Hop und Burger im Pool." },
+            { id: 33, district: "Kreuzberg", name: "Gipfelstürmer", lat: 52.4890, lng: 13.3820, baseCost: 5500, baseIncome: 45, type: "Aussicht", description: "Auf dem Kreuzberg." },
             { id: 9, district: "Friedrichshain", name: "Bergheim", lat: 52.5113, lng: 13.4433, baseCost: 100000, baseIncome: 800, type: "Legendär", description: "Die härteste Tür der Welt." },
             { id: 12, district: "Friedrichshain", name: "Tante Renate", lat: 52.4976, lng: 13.4658, baseCost: 30000, baseIncome: 210, type: "Club", description: "Ein Haus voller wirrer Partys." },
             { id: 13, district: "Friedrichshain", name: "The Grid", lat: 52.5028, lng: 13.4475, baseCost: 60000, baseIncome: 450, type: "Tourist", description: "Jeder Schulausflug endet hier." },
             { id: 14, district: "Friedrichshain", name: "Star Club", lat: 52.5085, lng: 13.4542, baseCost: 8000, baseIncome: 60, type: "Kultur", description: "Kino, Klettern, Punkrock." },
+            { id: 34, district: "Friedrichshain", name: "Flohmarkt-Bar", lat: 52.5110, lng: 13.4600, baseCost: 3200, baseIncome: 28, type: "Kiez", description: "Sonntags voll." },
             { id: 6, district: "Mitte", name: "Der Safe", lat: 52.5106, lng: 13.4194, baseCost: 10000, baseIncome: 90, type: "Techno", description: "Der Urvater des Berliner Techno." },
             { id: 10, district: "Mitte", name: "KittyKat", lat: 52.5126, lng: 13.4165, baseCost: 250000, baseIncome: 1500, type: "Legendär", description: "Hier fallen alle Hüllen." },
             { id: 15, district: "Mitte", name: "King Kong Bar", lat: 52.5255, lng: 13.4124, baseCost: 3500, baseIncome: 30, type: "Bar", description: "Schick in der Brunnenstraße." },
             { id: 16, district: "Mitte", name: "Permament Vacation", lat: 52.5220, lng: 13.3880, baseCost: 7000, baseIncome: 55, type: "Politik", description: "Wo Politiker Kölsch trinken." },
             { id: 23, district: "Mitte", name: "TV Tower Bar", lat: 52.5208, lng: 13.4094, baseCost: 20000, baseIncome: 180, type: "View", description: "Ganz oben in der Kugel." },
+            { id: 35, district: "Mitte", name: "S-Bahn Bogen", lat: 52.5230, lng: 13.4020, baseCost: 12500, baseIncome: 100, type: "Touristen", description: "Direkt am Markt." },
             { id: 7, district: "Prenzlauer Berg", name: "Panke Garten", lat: 52.5404, lng: 13.4107, baseCost: 20000, baseIncome: 180, type: "Biergarten", description: "Berlins ältester Biergarten." },
             { id: 17, district: "Prenzlauer Berg", name: "Culture Brewery", lat: 52.5390, lng: 13.4132, baseCost: 25000, baseIncome: 190, type: "Areal", description: "Riesiges Areal, viele Clubs." },
             { id: 24, district: "Prenzlauer Berg", name: "Mauerpark Karaoke", lat: 52.5440, lng: 13.4030, baseCost: 2500, baseIncome: 20, type: "OpenAir", description: "Sonntags singen vor tausenden." },
             { id: 25, district: "Prenzlauer Berg", name: "Wasserturm", lat: 52.5330, lng: 13.4200, baseCost: 8000, baseIncome: 65, type: "Kiez", description: "Rund um den Turm." },
+            { id: 36, district: "Prenzlauer Berg", name: "Helmuts Eck", lat: 52.5360, lng: 13.4180, baseCost: 4200, baseIncome: 35, type: "Tradition", description: "Alte Berliner Schule." },
             { id: 5, district: "Charlottenburg", name: "Ape Lounge", lat: 52.5053, lng: 13.3364, baseCost: 5000, baseIncome: 45, type: "Chic", description: "Teure Drinks, Blick auf Affen." },
             { id: 18, district: "Charlottenburg", name: "Dunkles Café", lat: 52.5065, lng: 13.3200, baseCost: 4000, baseIncome: 35, type: "24h", description: "Hat eigentlich immer offen." },
             { id: 26, district: "Charlottenburg", name: "Schlossgarten", lat: 52.5200, lng: 13.2950, baseCost: 12000, baseIncome: 95, type: "Royal", description: "Feiern wie ein König." },
             { id: 27, district: "Charlottenburg", name: "Ku'damm Beach", lat: 52.4980, lng: 13.2800, baseCost: 30000, baseIncome: 220, type: "Luxus", description: "Champagner am Halensee." },
+            { id: 37, district: "Charlottenburg", name: "Tenor-Klause", lat: 52.5120, lng: 13.3100, baseCost: 9000, baseIncome: 75, type: "Kultur", description: "Nach der Oper." },
             { id: 19, district: "Lichtenberg", name: "Sisyphus Hill", lat: 52.4930, lng: 13.4910, baseCost: 80000, baseIncome: 650, type: "OpenAir", description: "Feiern von Freitag bis Montag." },
             { id: 28, district: "Lichtenberg", name: "Dong Xuan Center", lat: 52.5350, lng: 13.4850, baseCost: 5000, baseIncome: 40, type: "Markt", description: "Geheimtipps in Halle 8." },
             { id: 29, district: "Lichtenberg", name: "Rummels Bucht", lat: 52.4970, lng: 13.4800, baseCost: 18000, baseIncome: 130, type: "Piraten", description: "Versteckt am Ufer." },
+            { id: 38, district: "Lichtenberg", name: "Elefanten-Tränke", lat: 52.5000, lng: 13.5200, baseCost: 3500, baseIncome: 30, type: "Lokal", description: "Am Tierpark." },
             { id: 20, district: "Treptow", name: "Molecule Man", lat: 52.4967, lng: 13.4593, baseCost: 500000, baseIncome: 2500, type: "Landmark", description: "Party auf dem Wasser." },
             { id: 30, district: "Treptow", name: "Island of Youth", lat: 52.4850, lng: 13.4750, baseCost: 10000, baseIncome: 85, type: "Insel", description: "Abhängen auf der Brücke." },
-            { id: 31, district: "Treptow", name: "Arena Badeschiff", lat: 52.5000, lng: 13.4530, baseCost: 60000, baseIncome: 420, type: "Sommer", description: "Pool in der Spree." }
+            { id: 31, district: "Treptow", name: "Arena Badeschiff", lat: 52.5000, lng: 13.4530, baseCost: 60000, baseIncome: 420, type: "Sommer", description: "Pool in der Spree." },
+            { id: 39, district: "Treptow", name: "Spreepark-Ruine", lat: 52.4850, lng: 13.4900, baseCost: 25000, baseIncome: 200, type: "Abenteuer", description: "Zwischen alten Dinos." }
         ];
 
         const BASE_ACHIEVEMENTS = [
@@ -192,7 +234,7 @@
 
         const App = () => {
             const [gameState, setGameState] = useState(() => {
-                const saved = localStorage.getItem('berlinBarTycoon_v13'); 
+                const saved = localStorage.getItem('berlinBarTycoon_v18'); 
                 const defaultState = {
                     money: 0, clickLevel: 1, totalClicks: 0, unlockedAchievements: [], bars: {}, hasSeenWin: false
                 };
@@ -218,7 +260,7 @@
             const [showWinModal, setShowWinModal] = useState(false);
             const [notification, setNotification] = useState(null);
             
-            // MOVED UP: Definitions that were causing ReferenceError
+            // Definitions
             const selectedBar = selectedBarId ? INITIAL_BARS.find(b => b.id === selectedBarId) : null;
             const selectedBarState = selectedBarId ? gameState.bars[selectedBarId] : null;
 
@@ -272,13 +314,14 @@
 
             const getClickIncome = () => {
                 const base = (10 * Math.pow(1.8, gameState.clickLevel - 1)) + (getTotalIncome() * 0.05);
-                return base * globalMult * 4; 
+                return base * globalMult * 40; 
             };
 
             const getClickUpgradeCost = () => {
                 return Math.floor(500 * Math.pow(2.5, gameState.clickLevel - 1));
             };
 
+            // Fixed Visibility Check with tolerance matching visual
             const isBarVisible = (targetBar) => {
                 const targetLat = targetBar.lat;
                 const targetLng = targetBar.lng;
@@ -289,7 +332,8 @@
                     const radius = getRangeRadius(sourceBar.id);
                     if (radius > 0) {
                         const dist = getDistanceMeters(sourceBar.lat, sourceBar.lng, targetLat, targetLng);
-                        if (dist <= radius) return true;
+                        // Buffer matching the 1.05 overdraw in fog
+                        if (dist <= radius * 1.1) return true;
                     }
                 }
                 return false;
@@ -299,7 +343,7 @@
                 return INITIAL_BARS.some(bar => isBarVisible(bar) && (gameState.money >= getUpgradeCost(bar.id) || gameState.money >= getRangeUpgradeCost(bar.id)));
             }, [gameState.money, gameState.bars]);
 
-            // --- CANVAS FOG DRAWING ---
+            // --- CANVAS FOG DRAWING (HEXAGONS) ---
             const drawFog = useCallback(() => {
                 if (!mapRef.current || !canvasRef.current) return;
                 
@@ -320,30 +364,97 @@
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.fillStyle = '#ffffff';
 
-                INITIAL_BARS.forEach(bar => {
-                    const radiusMeters = getRangeRadius(bar.id);
-                    if (radiusMeters > 0) {
-                        const center = map.latLngToContainerPoint([bar.lat, bar.lng]);
-                        // Fix for radius stability: calc based on latitude
-                        const latRad = bar.lat * Math.PI / 180;
-                        const metersPerPixel = 156543.03392 * Math.cos(latRad) / Math.pow(2, map.getZoom());
-                        const radiusPx = radiusMeters / metersPerPixel;
+                const anchorLat = 52.5;
+                const anchorLng = 13.4;
+                const latRad = 52.5 * Math.PI / 180;
+                const metersPerPixel = 156543.03392 * Math.cos(latRad) / Math.pow(2, map.getZoom());
+                
+                const hexRadiusPx = (HEX_SIZE_METERS / metersPerPixel) * 1.05; 
 
+                const hexPoints = [];
+                for(let i=0; i<6; i++) {
+                    const angle_deg = 60 * i - 30;
+                    const angle_rad = Math.PI / 180 * angle_deg;
+                    hexPoints.push({
+                        x: hexRadiusPx * Math.cos(angle_rad),
+                        y: hexRadiusPx * Math.sin(angle_rad)
+                    });
+                }
+
+                const visibleHexes = new Set(); 
+
+                INITIAL_BARS.forEach(bar => {
+                    const rangeRadius = getRangeRadius(bar.id);
+                    if (rangeRadius <= 0) return;
+
+                    const dy = (bar.lat - anchorLat) * 111320;
+                    const dx = (bar.lng - anchorLng) * 111320 * Math.cos(latRad);
+                    const barAxial = metersToAxial(dx, -dy); 
+                    
+                    // Slightly tighter hex collection logic to prevent "over-revealing"
+                    const rangeInHexes = Math.ceil(rangeRadius / (HEX_SIZE_METERS * Math.sqrt(3)/2)) + 1;
+                    
+                    for (let q = -rangeInHexes; q <= rangeInHexes; q++) {
+                        for (let r = Math.max(-rangeInHexes, -q - rangeInHexes); r <= Math.min(rangeInHexes, -q + rangeInHexes); r++) {
+                            const gridQ = barAxial.q + q;
+                            const gridR = barAxial.r + r;
+                            
+                            // Check precise distance
+                            const hexCenterMeters = axialToMeters(gridQ, gridR);
+                            const barCenterMeters = axialToMeters(barAxial.q, barAxial.r);
+                            const dist = Math.sqrt((hexCenterMeters.x - barCenterMeters.x)**2 + (hexCenterMeters.y - barCenterMeters.y)**2);
+                            
+                            if (dist <= rangeRadius + HEX_SIZE_METERS * 0.5) {
+                                visibleHexes.add(`${gridQ},${gridR}`);
+                            }
+                        }
+                    }
+                });
+
+                visibleHexes.forEach(key => {
+                    const [q, r] = key.split(',').map(Number);
+                    const centerMeters = axialToMeters(q, r); 
+                    const dLat = -centerMeters.y / 111320;
+                    const dLng = centerMeters.x / (111320 * Math.cos(latRad));
+                    const cellLat = anchorLat + dLat;
+                    const cellLng = anchorLng + dLng;
+                    const screenPoint = map.latLngToContainerPoint([cellLat, cellLng]);
+
+                    if (screenPoint.x < -hexRadiusPx || screenPoint.x > size.x + hexRadiusPx || 
+                        screenPoint.y < -hexRadiusPx || screenPoint.y > size.y + hexRadiusPx) return;
+
+                    ctx.beginPath();
+                    hexPoints.forEach((p, i) => {
+                        if(i===0) ctx.moveTo(screenPoint.x + p.x, screenPoint.y + p.y);
+                        else ctx.lineTo(screenPoint.x + p.x, screenPoint.y + p.y);
+                    });
+                    ctx.closePath();
+                    ctx.fill();
+                });
+
+                // Guarantee Visibility Holes
+                INITIAL_BARS.forEach(bar => {
+                    if (isBarVisible(bar)) {
+                        const center = map.latLngToContainerPoint([bar.lat, bar.lng]);
                         ctx.beginPath();
-                        ctx.arc(center.x, center.y, radiusPx, 0, Math.PI * 2);
+                        hexPoints.forEach((p, i) => {
+                            if(i===0) ctx.moveTo(center.x + p.x, center.y + p.y);
+                            else ctx.lineTo(center.x + p.x, center.y + p.y);
+                        });
+                        ctx.closePath();
                         ctx.fill();
                     }
                 });
+
             }, [gameState.bars]); 
 
-            // --- INITIALIZATION ---
             useEffect(() => {
                 if (!mapRef.current) {
-                    // Init Map ONLY ONCE
                     mapRef.current = L.map('map', { zoomControl: false, attributionControl: false }).setView([52.4808, 13.4261], 14);
                     
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; OpenStreetMap contributors',
+                    // CartoDB Voyager
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; OpenStreetMap &copy; CARTO',
                         maxZoom: 19
                     }).addTo(mapRef.current);
 
@@ -355,7 +466,6 @@
 
                 const map = mapRef.current;
 
-                // Re-bind events to current drawFog closure
                 map.off('move', drawFog);
                 map.off('zoom', drawFog);
                 map.off('resize', drawFog);
@@ -366,7 +476,6 @@
                 map.on('resize', drawFog);
                 map.on('viewreset', drawFog);
 
-                // Force draw
                 drawFog();
 
                 return () => {
@@ -375,7 +484,7 @@
                     map.off('resize', drawFog);
                     map.off('viewreset', drawFog);
                 };
-            }, [drawFog]); // Only re-run if drawFog changes (which depends on bars state)
+            }, [drawFog]); 
 
             // --- LOOPS & OTHER EFFECTS ---
             useEffect(() => {
@@ -387,7 +496,7 @@
             }, [gameState.bars, gameState.unlockedAchievements]);
 
             useEffect(() => {
-                localStorage.setItem('berlinBarTycoon_v13', JSON.stringify(gameState));
+                localStorage.setItem('berlinBarTycoon_v18', JSON.stringify(gameState));
             }, [gameState]);
 
             useEffect(() => {
@@ -420,12 +529,10 @@
                 }
             }, [gameState.money, gameState.bars, gameState.clickLevel, gameState.totalClicks]);
 
-            // Markers & Lines Update
             useEffect(() => {
                 if(!mapRef.current) return;
                 const map = mapRef.current;
 
-                // --- SCOUT ARROWS ---
                 scoutLinesRef.current.forEach(l => {
                     if(l.line) l.line.remove();
                     if(l.tip) l.tip.remove();
@@ -436,6 +543,8 @@
                 const hiddenBars = INITIAL_BARS.filter(b => !visibleBarIds.has(b.id));
 
                 if (hiddenBars.length > 0) {
+                    const candidates = [];
+                    
                     INITIAL_BARS.forEach(sourceBar => {
                         if (gameState.bars[sourceBar.id].owned) {
                             let nearest = null;
@@ -450,32 +559,43 @@
                             });
 
                             if (nearest) {
-                                const line = L.polyline([[sourceBar.lat, sourceBar.lng], [nearest.lat, nearest.lng]], {
-                                    color: '#eab308', // Yellow
-                                    dashArray: '8, 8',
-                                    weight: 4, // Thicker
-                                    opacity: 0.9,
-                                    className: 'animate-pulse'
-                                }).addTo(map);
-                                
-                                // Label closer to source
-                                const lat = sourceBar.lat + (nearest.lat - sourceBar.lat) * 0.15; // Closer to start (15%)
-                                const lng = sourceBar.lng + (nearest.lng - sourceBar.lng) * 0.15;
-
-                                const tooltip = L.tooltip({
-                                    permanent: true, direction: 'center', className: 'scout-label', offset: [0, 0]
-                                })
-                                .setLatLng([lat, lng])
-                                .setContent(`➡ ${formatDistance(minDistance)}`)
-                                .addTo(map);
-                                
-                                scoutLinesRef.current.push({line, tip: tooltip});
+                                candidates.push({ source: sourceBar, target: nearest, dist: minDistance });
                             }
                         }
                     });
+
+                    const bestPaths = {};
+                    candidates.forEach(c => {
+                        if (!bestPaths[c.target.id] || c.dist < bestPaths[c.target.id].dist) {
+                            bestPaths[c.target.id] = c;
+                        }
+                    });
+
+                    Object.values(bestPaths).forEach(c => {
+                        const { source: sourceBar, target: nearest, dist: minDistance } = c;
+                        
+                        const line = L.polyline([[sourceBar.lat, sourceBar.lng], [nearest.lat, nearest.lng]], {
+                            color: '#eab308', 
+                            dashArray: '8, 8',
+                            weight: 4, 
+                            opacity: 0.9,
+                            className: 'animate-pulse'
+                        }).addTo(map);
+                        
+                        const lat = sourceBar.lat + (nearest.lat - sourceBar.lat) * 0.15;
+                        const lng = sourceBar.lng + (nearest.lng - sourceBar.lng) * 0.15;
+
+                        const tooltip = L.tooltip({
+                            permanent: true, direction: 'center', className: 'scout-label', offset: [0, 0]
+                        })
+                        .setLatLng([lat, lng])
+                        .setContent(`➡ ${formatDistance(minDistance)}`)
+                        .addTo(map);
+                        
+                        scoutLinesRef.current.push({line, tip: tooltip});
+                    });
                 }
 
-                // --- MARKERS ---
                 INITIAL_BARS.forEach(bar => {
                     const isVisible = isBarVisible(bar);
                     const state = gameState.bars[bar.id] || { owned: false };
@@ -506,8 +626,6 @@
                         levelBadgeHtml = `<div class="${badgeClass}">${state.level}</div>`;
                     }
 
-                    // Define global trigger if needed, or handle differently. 
-                    // Using window for simplicity in leaflet html
                     window[`triggerUpgrade_${bar.id}`] = (e) => {
                         if(e) e.stopPropagation();
                         purchaseOrUpgradeBar(bar.id, true);
@@ -522,6 +640,7 @@
                             <div class="${markerClass}">${state.owned ? '🍻' : '🔒'}</div>
                             ${levelBadgeHtml}
                             ${state.owned && income > 0 ? `<div class="income-badge">${formatShortMoney(income)}/s</div>` : ''}
+                            ${!state.owned && isVisible ? `<div class="cost-badge">€${formatShortMoney(bar.baseCost)}</div>` : ''}
                         </div>
                     `;
 
@@ -545,6 +664,16 @@
 
             }, [gameState.bars, gameState.money]); 
 
+            const barsByDistrict = useMemo(() => {
+                const groups = {};
+                INITIAL_BARS.forEach(bar => {
+                    if (isBarVisible(bar)) {
+                        if (!groups[bar.district]) groups[bar.district] = [];
+                        groups[bar.district].push(bar);
+                    }
+                });
+                return groups;
+            }, [gameState.bars]);
 
             // --- ACTIONS ---
             const handleClicker = () => {
@@ -606,11 +735,9 @@
                     const newBars = { ...prev.bars };
                     let changed = false;
                     
-                    // 1. Upgrade Income (Prioritize Owned)
                     INITIAL_BARS.forEach(bar => {
                         if (!isBarVisible(bar)) return;
                         const state = newBars[bar.id];
-                        // Prioritize income upgrades for owned bars first
                         if(state.owned) {
                              const cost = Math.floor(bar.baseCost * Math.pow(1.5, state.level));
                              if (currentMoney >= cost) {
@@ -621,7 +748,6 @@
                         }
                     });
                     
-                    // 2. Buy New Bars (if money left)
                     INITIAL_BARS.forEach(bar => {
                         if (!isBarVisible(bar)) return;
                         const state = newBars[bar.id];
@@ -635,12 +761,9 @@
                         }
                     });
 
-                    // 3. Upgrade Visibility (if money left)
                     INITIAL_BARS.forEach(bar => {
                         if (!newBars[bar.id].owned) return;
-                        // Use updated state for cost calc if it changed in step 1, but range level didn't change yet
                         const rangeCost = Math.floor(1000 * Math.pow(1.8, newBars[bar.id].rangeLevel - 1));
-                        
                         if (currentMoney >= rangeCost) {
                             currentMoney -= rangeCost;
                             newBars[bar.id].rangeLevel += 1;
@@ -685,17 +808,16 @@
                 setTimeout(() => el.remove(), 4000);
             };
 
-            // ADDED: barsByDistrict definition that was missing
-            const barsByDistrict = useMemo(() => {
-                const groups = {};
-                INITIAL_BARS.forEach(bar => {
-                    if (isBarVisible(bar)) {
-                        if (!groups[bar.district]) groups[bar.district] = [];
-                        groups[bar.district].push(bar);
+            useEffect(() => {
+                 const particleInterval = setInterval(() => {
+                    const ownedBars = INITIAL_BARS.filter(b => gameState.bars[b.id]?.owned);
+                    if (ownedBars.length > 0) {
+                        const randomBar = ownedBars[Math.floor(Math.random() * ownedBars.length)];
+                        showMoneyParticle(randomBar.id);
                     }
-                });
-                return groups;
-            }, [gameState.bars]); // Depend on bars state because isBarVisible depends on it (indirectly via owned status/ranges)
+                }, 2000);
+                return () => clearInterval(particleInterval);
+            }, [gameState.bars]);
 
             return (
                 <div className="relative h-screen w-screen font-sans text-white select-none">
@@ -776,34 +898,6 @@
                             </button>
                         </div>
                     </div>
-
-                    {showAchievements && (
-                        <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAchievements(false)}>
-                            <div className="bg-gray-900 border border-gray-600 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-                                <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800">
-                                    <h2 className="text-xl font-bold text-yellow-500 flex items-center gap-2">🏆 Erfolge</h2>
-                                    <button onClick={() => setShowAchievements(false)} className="text-gray-400 hover:text-white">✕</button>
-                                </div>
-                                <div className="p-4 overflow-y-auto space-y-3">
-                                    {ALL_ACHIEVEMENTS.map(ach => {
-                                        const unlocked = gameState.unlockedAchievements.includes(ach.id);
-                                        return (
-                                            <div key={ach.id} className={`p-3 rounded-xl border flex items-center gap-3 ${unlocked ? 'bg-gray-800 border-yellow-600/50' : 'bg-gray-900/50 border-gray-800 opacity-60'}`}>
-                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${unlocked ? 'bg-yellow-600 text-white' : 'bg-gray-800 text-gray-600'}`}>
-                                                    {unlocked ? '✓' : '?'}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className={`font-bold ${unlocked ? 'text-white' : 'text-gray-500'}`}>{ach.name}</div>
-                                                    <div className="text-xs text-gray-400">{ach.description}</div>
-                                                </div>
-                                                {ach.reward > 0 && <div className="text-xs font-mono text-green-400 bg-green-900/30 px-2 py-1 rounded">x{ach.reward} Boost</div>}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     {selectedBar && (
                         <div className="absolute bottom-0 left-0 right-0 md:left-auto md:right-4 md:bottom-4 md:w-96 md:top-24 z-30 p-4 animate-slide-up pointer-events-none md:pointer-events-auto">
